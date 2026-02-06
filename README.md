@@ -29,24 +29,25 @@ BMAD Method는 4개의 Phase로 구성된 애자일 개발 프레임워크입니
 
 ## 설치
 
-### 1. 파일 복사
-
-`~/.claude/` 디렉토리에 다음 구조로 복사합니다:
+### Quick Install (원라이너)
 
 ```bash
-# 설정 파일
+curl -fsSL https://raw.githubusercontent.com/coco-de/bmad/main/install.sh | bash
+```
+
+### Manual Install
+
+```bash
+git clone https://github.com/coco-de/bmad.git
+cd bmad
 cp -r config/bmad/ ~/.claude/config/bmad/
-
-# 커맨드 (슬래시 명령어)
 cp -r commands/bmad/ ~/.claude/commands/bmad/
-
-# 스킬 (에이전트 정의)
 cp -r skills/bmad/ ~/.claude/skills/bmad/
 ```
 
-### 2. 글로벌 설정
+### 설치 후 설정
 
-`~/.claude/config/bmad/config.yaml`을 열어 사용자 정보를 수정합니다:
+1. `~/.claude/config/bmad/config.yaml`을 열어 사용자 정보를 수정합니다:
 
 ```yaml
 user_name: "your-name"
@@ -55,9 +56,7 @@ communication_language: "English"
 document_output_language: "English"
 ```
 
-### 3. 프로젝트 초기화
-
-프로젝트 루트에서 Claude Code를 실행하고:
+2. 프로젝트 루트에서 Claude Code를 실행하고 초기화합니다:
 
 ```
 /bmad:workflow-init
