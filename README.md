@@ -210,6 +210,10 @@ BMAD 워크플로우를 실행하면 프로젝트 루트에 다음 파일들이 
 
 모듈 활성화는 `~/.claude/config/bmad/config.yaml`의 `modules_enabled`에서 설정합니다.
 
+## Credits
+
+이 프로젝트는 [aj-geddes/claude-code-bmad-skills](https://github.com/aj-geddes/claude-code-bmad-skills)를 기반으로 제작되었습니다. 원본 BMAD Method의 스킬/커맨드 체계를 참고하여 ZenHub MCP 연동 및 한국어 워크플로우를 추가했습니다.
+
 ## 라이선스
 
 MIT
