@@ -297,7 +297,7 @@ Ask: "How complex is this story? Let's estimate story points."
 ```markdown
 ## Definition of Done
 
-- [ ] Code implemented and committed to feature branch
+- [ ] Code implemented and committed to story branch (within epic branch hierarchy)
 - [ ] Unit tests written and passing (≥80% coverage)
   - [ ] Token generation tests
   - [ ] Token validation tests
@@ -504,6 +504,8 @@ Acceptance Criteria: {count}
 Dependencies: {count}
 
 Document: docs/stories/STORY-{ID}.md
+Branch (planned): story/STORY-{ID}-{slug}
+Epic Branch: epic/EPIC-{number}-{slug}
 
 ZenHub: #{issue_number} ({url})  (if zh_available)
 Pipeline: Sprint Backlog

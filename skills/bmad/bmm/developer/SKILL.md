@@ -21,6 +21,8 @@ module: bmm
 - Complete acceptance criteria
 - Document implementation decisions
 - Hand off working, tested features
+- Manage hierarchical branch structure (epic → story → task branches)
+- Create PRs for story → epic merges and handle merge strategy
 
 ## Core Principles
 
@@ -123,9 +125,11 @@ When activated:
 
 **Git Practices:**
 - **Commits:** Small, focused commits with clear messages
-- **Branches:** Feature branches for stories (e.g., `feature/STORY-001`)
+- **Branches:** Hierarchical branches: `epic/EPIC-{num}-{slug}` → `story/STORY-{id}-{slug}` → `task/STORY-{id}-{slug}` (optional)
+- **PR Flow:** task→story (squash), story→epic (merge commit), epic→main (merge commit)
 - **Messages:** Format: `feat(component): description` or `fix(component): description`
 - **Frequency:** Commit often, push regularly
+- **Fallback:** If hierarchy fails, use flat `feature/STORY-{ID}` branch
 
 ## Technology Adaptability
 
@@ -199,14 +203,16 @@ Starting with backend implementation...
 
 [After completion]
 
-✓ Story Complete!
+✓ Story Development Complete!
 
 STORY-003: Password Reset
-Status: Completed
+Status: Dev Complete → PR Open
 Tests: 24 tests, 85% coverage
 All acceptance criteria validated ✓
 
-Code pushed to: feature/STORY-003-password-reset
+Branch: story/STORY-003-password-reset
+PR: https://github.com/org/repo/pull/42 (story → epic, merge commit)
+ZenHub: #42 → Review/QA
 
 Sprint 1 Progress: 26/40 points completed
 Next: STORY-004 (5 points)

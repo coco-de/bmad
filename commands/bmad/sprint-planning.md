@@ -507,6 +507,15 @@ project_level: {level}
 current_sprint: 1
 sprint_plan_path: "{path to sprint plan}"
 
+# Epic Branch Tracking (populated by Part 11 Step 5)
+epic_branches: []
+  # - epic_id: "{zh_epic_id}"
+  #   epic_name: "{epic_name}"
+  #   branch: "epic/EPIC-{number}-{slug}"
+  #   created: false       # lazy-created on first story start
+  #   pr_url: ""           # epic → main PR URL
+  #   pr_status: ""        # open | merged | closed
+
 sprints:
   - sprint_number: 1
     start_date: "{date}"
@@ -522,11 +531,13 @@ sprints:
         points: {points}
         status: "not_started"
         assigned_to: null
-      - story_id: "STORY-002"
-        ...
         zh_issue_id: ""        # ZenHub issue ID (populated by ZenHub sync)
         zh_issue_number: null  # GitHub issue number
         zh_issue_url: ""       # GitHub issue URL
+        branch: ""             # story branch (populated by Part 11 Step 5 or dev-story)
+        epic_branch: ""        # parent epic branch
+        pr_url: ""             # story → epic PR URL
+        pr_status: ""          # open | merged | closed
 
 velocity:
   sprint_1: null  # Will be filled when sprint completes
@@ -632,6 +643,38 @@ For each story in the sprint plan:
 | STORY-002 | #{number} | Story | {url} |
 ```
 
+**Step 5: Pre-compute Branch Names**
+
+For each epic and story, compute branch names using `helpers.md#Resolve-Branch-Names`:
+
+1. For each epic:
+   - Compute: `epic/EPIC-{zh_issue_number}-{slug}`
+   - Store in sprint-status.yaml `epic_branches` section:
+     ```yaml
+     epic_branches:
+       - epic_id: "{zh_epic_id}"
+         epic_name: "{epic_name}"
+         branch: "epic/EPIC-{number}-{slug}"
+         created: false
+     ```
+   - Note: Branch is NOT created here — lazy creation on first story start (dev-story Part 3)
+
+2. For each story:
+   - Compute: `story/STORY-{id}-{slug}`
+   - Store in sprint-status.yaml story entry:
+     ```yaml
+     branch: "story/STORY-{id}-{slug}"
+     epic_branch: "epic/EPIC-{number}-{slug}"
+     ```
+
+3. Log pre-computed branch names:
+   ```
+   Branch Names Pre-computed:
+   epic/EPIC-025-coui-flutter-maintenance
+     ├── story/STORY-008-dcm-warning-zero
+     └── story/STORY-009-widgetbook-update
+   ```
+
 **Display ZenHub sync results in summary:**
 ```
 ZenHub Sync Results:
@@ -639,6 +682,7 @@ ZenHub Sync Results:
 - Stories created: {count}/{total}
 - Sprint assignments: {count}
 - Dependencies synced: {count}
+- Branch names pre-computed: {count} epics, {count} stories
 ```
 
 ---
@@ -698,6 +742,7 @@ Or run /create-story STORY-XXX to generate detailed story docs
 - **Sync story:** `helpers.md#Sync-Story-to-ZenHub`
 - **Sync deps:** `helpers.md#Sync-Story-Dependencies-to-ZenHub`
 - **Store xref:** `helpers.md#Store-ZenHub-Cross-Reference`
+- **Resolve branches:** `helpers.md#Resolve-Branch-Names`
 
 ---
 
@@ -783,5 +828,8 @@ Or run /create-story STORY-XXX to generate detailed story docs
 - Assign stories to active sprint (Sprint Backlog) or future sprints (Product Backlog)
 - Store ZenHub cross-references in sprint-status.yaml for downstream workflows
 - If ZenHub sync fails partially, log what succeeded and continue
+- After ZenHub sync, pre-compute branch names (Part 11 Step 5) using `helpers.md#Resolve-Branch-Names`
+- Store branch names in sprint-status.yaml for dev-story to use (epic_branches + story branch/epic_branch fields)
+- Branches are NOT created during sprint planning — only names are pre-computed for consistency
 
 **Remember:** Good sprint planning = smooth implementation. Poor planning = chaos, delays, and frustration. Take time to break stories down properly and estimate accurately.

@@ -9,6 +9,16 @@ sprint_start_date: "{{START_DATE}}"
 sprint_end_date: ""
 last_updated: "{{TIMESTAMP}}"
 
+# Epic Branch Tracking
+epic_branches: []
+  # Example structure:
+  # - epic_id: ""           # ZenHub epic issue ID
+  #   epic_name: ""         # Epic display name
+  #   branch: ""            # epic branch name (e.g., epic/EPIC-025-coui-flutter-maintenance)
+  #   created: false        # whether branch has been created
+  #   pr_url: ""            # epic → main PR URL
+  #   pr_status: ""         # open | merged | closed
+
 # Epic and Story Tracking
 epics: []
   # Example structure:
@@ -25,6 +35,10 @@ epics: []
   #       assigned_to: ""
   #       estimate: ""
   #       actual: ""
+  #       branch: ""           # story branch name (e.g., story/STORY-008-dcm-warning-zero)
+  #       epic_branch: ""      # parent epic branch name
+  #       pr_url: ""           # story → epic PR URL
+  #       pr_status: ""        # open | merged | closed
 
 # Sprint Metrics
 metrics:

@@ -21,6 +21,8 @@ module: bmm
 - Facilitate story creation and refinement
 - Ensure work is properly sized and scoped
 - Sync sprint artifacts to ZenHub (epics, stories, dependencies)
+- Define branch naming conventions (epic/story/task hierarchy)
+- Pre-compute branch names in sprint-status.yaml during sprint planning
 
 ## Core Principles
 
@@ -146,6 +148,8 @@ All stories follow this format:
 **Epic:** {Epic ID/name}
 **Priority:** {Must Have | Should Have | Could Have}
 **Story Points:** {1|2|3|5|8|13}
+**Branch:** story/STORY-{number}-{slug}
+**Epic Branch:** epic/EPIC-{number}-{slug}
 
 ## User Story
 
@@ -192,6 +196,9 @@ So that {benefit}
 - After creating sprint plan locally, sync epics and stories to ZenHub per `helpers.md#ZenHub-Integration`
 - If ZenHub MCP is unavailable, warn and continue with local-only workflow (graceful degradation)
 - Store ZenHub cross-references (issue IDs, URLs) in sprint-status.yaml and story documents
+- Pre-compute branch names during sprint planning (Part 11 Step 5) using `helpers.md#Resolve-Branch-Names`
+- Store branch names in sprint-status.yaml (epic_branches section + story branch/epic_branch fields)
+- Branches are NOT created during planning — only names are pre-computed for cross-session consistency
 
 ## Example Interaction
 

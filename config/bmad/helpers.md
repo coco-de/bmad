@@ -97,6 +97,149 @@ Using Edit tool:
 5. Save changes
 ```
 
+## Git Branch Strategy
+
+### Resolve Branch Names
+```
+Purpose: Compute epic/story/task branch names from sprint-status story entry
+
+Input: story entry (story_id, epic info, title)
+Output: { epic_branch, story_branch, task_prefix }
+
+Steps:
+1. Extract epic identifier:
+   - epic_number = epic's ZenHub issue number (e.g., 025)
+   - epic_slug = epic name → lowercase, spaces/special → hyphens, max 40 chars
+   - Example: "CoUI Flutter Maintenance" → "coui-flutter-maintenance"
+
+2. Build epic branch name:
+   - Format: epic/EPIC-{number}-{epic_slug}
+   - Example: epic/EPIC-025-coui-flutter-maintenance
+
+3. Extract story identifier:
+   - story_id from sprint-status (e.g., "STORY-008")
+   - story_slug = story title → lowercase, spaces/special → hyphens, max 40 chars
+   - Example: "DCM Warning Zero" → "dcm-warning-zero"
+
+4. Build story branch name:
+   - Format: story/STORY-{id}-{story_slug}
+   - Example: story/STORY-008-dcm-warning-zero
+
+5. Build task prefix:
+   - Format: task/STORY-{id}-
+   - Example: task/STORY-008-
+
+6. Return:
+   epic_branch: "epic/EPIC-{number}-{epic_slug}"
+   story_branch: "story/STORY-{id}-{story_slug}"
+   task_prefix: "task/STORY-{id}-"
+```
+
+### Create Branch Hierarchy
+```
+Purpose: Create epic and story branches in correct hierarchy
+
+Input: epic_branch, story_branch (from Resolve Branch Names)
+Requires: git repository
+
+Steps:
+1. Check if epic branch exists:
+   git branch -a | grep "{epic_branch}"
+
+2. If epic branch does NOT exist:
+   git checkout main
+   git pull origin main
+   git checkout -b {epic_branch}
+   git push -u origin {epic_branch}
+   Log: "✓ Created epic branch: {epic_branch}"
+
+3. Check if story branch exists:
+   git branch -a | grep "{story_branch}"
+
+4. If story branch does NOT exist:
+   git checkout {epic_branch}
+   git pull origin {epic_branch}
+   git checkout -b {story_branch}
+   git push -u origin {story_branch}
+   Log: "✓ Created story branch: {story_branch}"
+
+5. If story branch already exists:
+   git checkout {story_branch}
+   git pull origin {story_branch}
+   Log: "✓ Switched to existing story branch: {story_branch}"
+
+Fallback:
+  If any git operation fails:
+  - Log warning: "⚠ Failed to create branch hierarchy. Falling back to flat branch."
+  - git checkout main
+  - git checkout -b feature/STORY-{ID}
+  - Return fallback branch name
+```
+
+### Create Task Branch
+```
+Purpose: Create a task branch from the story branch for large tasks
+
+Input: story_branch, task_slug (short description)
+Output: task branch name
+
+Steps:
+1. Ensure on story branch:
+   git checkout {story_branch}
+   git pull origin {story_branch}
+
+2. Build task branch name:
+   - Format: task/STORY-{id}-{task_slug}
+   - Example: task/STORY-008-fix-lint-rules
+
+3. Create and push task branch:
+   git checkout -b {task_branch}
+   git push -u origin {task_branch}
+   Log: "✓ Created task branch: {task_branch}"
+
+4. Return task branch name
+```
+
+### Create PR and Merge
+```
+Purpose: Create a pull request and optionally merge it
+
+Input: source_branch, target_branch, pr_title, pr_body, merge_strategy
+  merge_strategy: "squash" (task→story) | "merge" (story→epic, epic→main)
+
+Steps:
+1. Push source branch:
+   git push origin {source_branch}
+
+2. Check if gh CLI is available:
+   which gh
+
+3. If gh CLI available:
+   a. Create PR:
+      gh pr create --base {target_branch} --head {source_branch} \
+        --title "{pr_title}" --body "{pr_body}"
+   b. Extract PR URL from output
+   c. Log: "✓ PR created: {pr_url}"
+   d. If auto-merge requested (task→story only):
+      gh pr merge {pr_url} --squash --delete-branch
+      Log: "✓ PR merged (squash): {source_branch} → {target_branch}"
+
+4. If gh CLI NOT available:
+   Log: "⚠ gh CLI not installed. Please create PR manually:"
+   Log: "  Source: {source_branch}"
+   Log: "  Target: {target_branch}"
+   Log: "  Title: {pr_title}"
+   Log: "  Merge strategy: {merge_strategy}"
+   Return manual_pr_needed = true
+
+5. Return { pr_url, merged, manual_pr_needed }
+
+Merge strategy reference:
+  - task → story: squash merge (clean commit history)
+  - story → epic: merge commit (preserve story history)
+  - epic → main: merge commit (preserve epic history)
+```
+
 ## ZenHub Integration
 
 ### Load ZenHub Context
@@ -230,6 +373,29 @@ Steps:
      zh_issue_id: "{zh_issue_id}"
      zh_issue_number: {zh_issue_number}
      zh_issue_url: "{zh_issue_url}"
+```
+
+### Move Pipeline with Context
+```
+Purpose: Move a ZenHub issue to a pipeline by name with error handling
+
+Input: zh_issue_id, pipeline_name (e.g., "In Progress", "Review/QA", "Done")
+Requires: zh_available = true, zh_pipelines map
+
+Steps:
+1. Resolve pipeline_name to pipeline_id:
+   pipeline_id = zh_pipelines[pipeline_name]
+   If not found: Log warning and return
+
+2. Call moveIssueToPipeline:
+   - issueId: zh_issue_id
+   - pipelineId: pipeline_id
+
+3. Log: "✓ ZenHub: #{issue_number} → {pipeline_name}"
+
+On failure:
+  - Log: "⚠ ZenHub pipeline move failed for #{issue_number} → {pipeline_name}. Continuing."
+  - Do NOT abort workflow — pipeline moves are best-effort
 ```
 
 ## Template Operations
@@ -425,4 +591,9 @@ To sync epic: See helpers.md#Sync-Epic-to-ZenHub
 To sync story: See helpers.md#Sync-Story-to-ZenHub
 To sync deps: See helpers.md#Sync-Story-Dependencies-to-ZenHub
 To store xref: See helpers.md#Store-ZenHub-Cross-Reference
+To resolve branches: See helpers.md#Resolve-Branch-Names
+To create branch hierarchy: See helpers.md#Create-Branch-Hierarchy
+To create task branch: See helpers.md#Create-Task-Branch
+To create PR: See helpers.md#Create-PR-and-Merge
+To move pipeline: See helpers.md#Move-Pipeline-with-Context
 ```

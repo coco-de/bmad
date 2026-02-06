@@ -32,6 +32,10 @@ You are the Developer, executing the **Dev Story** workflow.
    - If "completed": Ask user if they want to re-implement or extend
 6. **Load ZenHub context** per `helpers.md#Load-ZenHub-Context`
 7. **Check ZenHub story ID:** If story has `zh_issue_id` in sprint status, store for pipeline management
+8. **Resolve branch hierarchy:** per `helpers.md#Resolve-Branch-Names`
+   - Compute epic_branch, story_branch, task_prefix from sprint-status story entry
+   - If story already has `branch` field in sprint-status, use that instead
+9. **Check if branches exist:** `git branch -a` to see which branches already exist
 
 ---
 
@@ -70,8 +74,16 @@ I'll now plan the implementation...
 **Move to In Progress on ZenHub:**
 ```
 If zh_available and zh_story_id exists:
-  Call moveIssueToPipeline(issueId: zh_story_id, pipelineId: zh_pipelines["In Progress"])
+  Call helpers.md#Move-Pipeline-with-Context(zh_story_id, "In Progress")
   Log: "✓ ZenHub: #{issue_number} → In Progress"
+
+  # If this is the first story starting in this epic, move epic to In Progress too
+  Check epic's stories in sprint-status:
+    If ALL other stories are "not_started":
+      # This is the first story — move epic to In Progress
+      If zh_epic_id exists:
+        Call helpers.md#Move-Pipeline-with-Context(zh_epic_id, "In Progress")
+        Log: "✓ ZenHub: Epic #{epic_number} → In Progress (first story started)"
 ```
 
 **Check dependencies:**
@@ -146,27 +158,50 @@ TodoWrite:
 
 ---
 
-### Part 3: Set Up Environment
+### Part 3: Set Up Branch Hierarchy
 
-**Before coding:**
+**Create hierarchical branch structure:**
 
-1. **Check codebase structure**
+1. **Create epic and story branches** per `helpers.md#Create-Branch-Hierarchy`:
+   ```
+   Call Create-Branch-Hierarchy(epic_branch, story_branch)
+   - Creates epic branch from main (if not exists)
+   - Creates story branch from epic (if not exists)
+   - Switches to story branch
+   ```
+
+2. **Update sprint-status.yaml** with branch info:
+   ```yaml
+   # Story entry
+   branch: "story/STORY-{ID}-{slug}"
+   epic_branch: "epic/EPIC-{number}-{slug}"
+
+   # Epic branches section (if new epic branch created)
+   epic_branches:
+     - epic_id: "{zh_epic_id}"
+       epic_name: "{epic_name}"
+       branch: "epic/EPIC-{number}-{slug}"
+       created: true
+   ```
+
+3. **Display branch hierarchy:**
+   ```
+   Branch Hierarchy:
+   main
+   └── {epic_branch}
+       └── {story_branch}  ← current
+   ```
+
+4. **Check codebase structure**
    - Use Glob/Grep to understand existing patterns
    - Identify where new code should live
    - Note existing naming conventions
 
-2. **Create feature branch**
-   ```bash
-   git checkout -b feature/STORY-{ID}-{short-title}
-   ```
-
-3. **Verify development environment**
+5. **Verify development environment**
    - Dependencies installed
-   - Database running (if needed)
    - Tests can run
-   - Development server works
 
-4. **Note starting point** (for later comparison)
+6. **Note starting point:**
    ```bash
    git status
    git log -1
@@ -665,60 +700,123 @@ Acceptance Criteria Checklist:
 
 ---
 
-### Part 10: Commit and Update Status
+### Part 9.5: Task Branch Management (Optional)
 
-**Git workflow:**
+**Decision heuristic — when to use task branches:**
 
-1. **Review changes:**
-   ```bash
-   git status
-   git diff
+| Condition | Action |
+|-----------|--------|
+| Task touches 3+ files | Create task branch |
+| Task estimated 2+ hours | Create task branch |
+| Task is experimental/risky | Create task branch |
+| Task touches 1-2 files, <2 hours | Commit directly on story branch |
+
+**If using task branch:**
+
+1. **Create task branch** per `helpers.md#Create-Task-Branch`:
+   ```
+   Call Create-Task-Branch(story_branch, "{task_slug}")
+   Example: task/STORY-008-fix-lint-rules
    ```
 
-2. **Stage changes:**
+2. **Implement task** on the task branch:
+   - Write code, tests
+   - Commit frequently on task branch
+
+3. **Create PR and merge** per `helpers.md#Create-PR-and-Merge`:
+   ```
+   Call Create-PR-and-Merge(
+     source: task_branch,
+     target: story_branch,
+     title: "fix: {task description} (STORY-{ID})",
+     merge_strategy: "squash"
+   )
+   ```
+   - Squash merge keeps story branch history clean
+   - Task branch is deleted after merge
+
+4. **Repeat** for each task that warrants a branch
+
+**If committing directly on story branch:**
+- Make focused commits with clear messages
+- No PR needed — changes go directly to story branch
+
+**Display task branch activity:**
+```
+Task Branches:
+  task/STORY-008-fix-lint-rules → story (squash merged) ✓
+  task/STORY-008-update-deps → story (squash merged) ✓
+  [direct commit] Add missing test cases ✓
+```
+
+---
+
+### Part 10: Complete Story — PR Flow and Status Update
+
+**Step 1: Final commit and push on story branch**
+
+1. Ensure on story branch:
+   ```bash
+   git checkout {story_branch}
+   ```
+2. Stage, commit, and push:
    ```bash
    git add .
+   git commit -m "feat({component}): implement {story title} (STORY-{ID})
+
+   - {summary of changes}
+
+   Closes STORY-{ID}"
+   git push origin {story_branch}
    ```
 
-3. **Commit with clear message:**
-   ```bash
-   git commit -m "feat(auth): implement password reset flow (STORY-003)
+**Step 2: Create story → epic PR** per `helpers.md#Create-PR-and-Merge`:
+```
+Call Create-PR-and-Merge(
+  source: story_branch,
+  target: epic_branch,
+  title: "feat: STORY-{ID} {title}",
+  body: "## Summary\n- {changes}\n\n## Acceptance Criteria\n- [x] All criteria met\n\nCloses STORY-{ID}",
+  merge_strategy: "merge"   # preserve story commit history
+)
+```
+- Do NOT auto-merge — PR stays open for review
+- Store pr_url for status tracking
 
-   - Add password reset token model
-   - Create reset request/validate/reset endpoints
-   - Add email sending for reset links
-   - Implement frontend reset pages
-   - Add unit and integration tests
-   - Coverage: 85%
-
-   Closes STORY-003"
-   ```
-
-4. **Run tests one more time:**
-   ```bash
-   npm test
-   ```
-
-5. **Push to remote:**
-   ```bash
-   git push origin feature/STORY-003-password-reset
-   ```
-
-**Update sprint status:**
-
-Per `helpers.md#Update-Sprint-Status`:
-1. Find STORY-003 in sprint status YAML
-2. Update status to "completed"
-3. Add completion_date
-4. Add actual_points (if different from estimate)
-5. Increment sprint completed_points
-6. Save status file
-
-**Move to Review/QA on ZenHub:**
+**Step 3: Move to Review/QA on ZenHub:**
 ```
 If zh_available and zh_story_id exists:
-  Call moveIssueToPipeline(issueId: zh_story_id, pipelineId: zh_pipelines["Review/QA"])
+  Call helpers.md#Move-Pipeline-with-Context(zh_story_id, "Review/QA")
   Log: "✓ ZenHub: #{issue_number} → Review/QA"
+```
+
+**Step 4: Update sprint status:**
+
+Per `helpers.md#Update-Sprint-Status`:
+1. Find STORY-{ID} in sprint status YAML
+2. Update status to "dev-complete"
+3. Update branch, epic_branch fields (if not already set)
+4. Update pr_url, pr_status: "open"
+5. Add completion_date
+6. Add actual_points (if different from estimate)
+7. Increment sprint completed_points
+8. Save status file
+
+**Step 5: Post-review guidance (displayed to user):**
+```
+PR Review and Merge Instructions:
+
+1. Review PR: {pr_url}
+2. After PR is approved and merged (story → epic):
+   - ZenHub: Move #{issue_number} → Done
+   - sprint-status.yaml: Update pr_status to "merged", status to "done"
+
+3. When ALL stories in this epic are Done:
+   - Create epic → main PR:
+     gh pr create --base main --head {epic_branch} \
+       --title "feat: {epic_name}" --body "..."
+   - Merge with merge commit (preserve epic history)
+   - ZenHub: Move Epic #{epic_number} → Done
 ```
 
 **Update story document** (if exists):
@@ -726,19 +824,14 @@ If zh_available and zh_story_id exists:
 ## Progress Tracking
 
 **Status History:**
-- 2025-11-01: Created by Steve
-- 2025-11-02: Started by Amelia
-- 2025-11-04: Code complete, tests passing
-- 2025-11-04: Completed by Amelia
+- {date}: Created
+- {date}: Started (branch: {story_branch})
+- {date}: Code complete, PR created
+- {date}: PR merged → Done
 
-**Actual Effort:** 8 points (matched estimate)
-
-**Implementation Notes:**
-- Used bcrypt for token hashing
-- Implemented rate limiting (3 attempts per hour)
-- Email sending via SendGrid
-- Token expiry set to 1 hour
-- Test coverage: 85%
+**Branch:** {story_branch}
+**PR:** {pr_url}
+**Actual Effort:** {points} points
 ```
 
 ---
@@ -748,25 +841,35 @@ If zh_available and zh_story_id exists:
 Show completion summary:
 
 ```
-✓ Story Complete!
+✓ Story Development Complete!
 
-STORY-003: Password Reset
-Status: Completed
-Story Points: 8
-Actual Effort: 8 points (matched estimate)
+STORY-{ID}: {Title}
+Status: Dev Complete → PR Open
+Story Points: {points}
+Actual Effort: {points} points
 
 Implementation:
-- Backend endpoints: 3 files created/modified
-- Frontend components: 2 pages created
-- Tests: 24 tests, 85% coverage
+- Files created/modified: {count}
+- Tests: {count} tests, {coverage}% coverage
 - All acceptance criteria validated ✓
 
-Code pushed to: feature/STORY-003-password-reset
-Branch ready for code review and merge
+Branch Hierarchy:
+main
+└── {epic_branch}
+    └── {story_branch}  ← PR open
+        ├── task/{slug-1} (squash merged) ✓   # if task branches used
+        └── task/{slug-2} (squash merged) ✓
 
-ZenHub: #{issue_number} → In Progress → Review/QA  (if zh_available)
+PR: {pr_url} (story → epic, merge commit)
 
-Next: Create pull request or continue with next story
+ZenHub Pipeline History:        (if zh_available)
+  Sprint Backlog → In Progress → Review/QA
+  Epic: #{epic_number} In Progress
+
+Next Steps:
+1. Review and merge PR: {pr_url}
+2. After merge: Move #{issue_number} → Done
+3. Continue with next story or create epic → main PR
 ```
 
 ---
@@ -775,31 +878,37 @@ Next: Create pull request or continue with next story
 
 **If more stories in sprint:**
 ```
-Story STORY-003 complete!
+Story STORY-{ID} PR open for review!
 
-Sprint 1 Progress: 26/40 points completed
+Sprint Progress: {completed}/{total} points
 
-Next stories in Sprint 1:
-- STORY-004: Email verification (5 points)
-- STORY-005: Profile management (2 points)
-- STORY-006: Product listing (8 points)
+Pending PR: {pr_url} (story → epic)
 
-Run /dev-story STORY-004 to continue
+Next stories in Sprint:
+- STORY-{next}: {title} ({points} points)
 
+Run /dev-story STORY-{next} to continue
 Or run /sprint-status to see full sprint progress
+```
+
+**If last story in epic:**
+```
+✓ All stories in Epic complete!
+
+All story PRs merged to {epic_branch}:
+- STORY-{A}: ✓ merged
+- STORY-{B}: ✓ merged
+
+Next: Create epic → main PR
+  gh pr create --base main --head {epic_branch} --title "feat: {epic_name}"
+  After merge: ZenHub Epic #{epic_number} → Done
 ```
 
 **If last story in sprint:**
 ```
-✓ Sprint 1 Complete!
+✓ Sprint Complete!
 
-All stories completed:
-- STORY-001: 5 points ✓
-- STORY-002: 3 points ✓
-- STORY-003: 8 points ✓
-
-Total: 16/40 points completed
-Velocity: 16 points
+Velocity: {points} points
 
 Next: Start Sprint 2 or run sprint retrospective
 ```
@@ -822,6 +931,11 @@ Next: Deploy to production or continue with enhancements
 - **Update sprint status:** `helpers.md#Update-Sprint-Status`
 - **Save document:** `helpers.md#Save-Output-Document`
 - **ZenHub context:** `helpers.md#Load-ZenHub-Context`
+- **Resolve branches:** `helpers.md#Resolve-Branch-Names`
+- **Create branch hierarchy:** `helpers.md#Create-Branch-Hierarchy`
+- **Create task branch:** `helpers.md#Create-Task-Branch`
+- **Create PR:** `helpers.md#Create-PR-and-Merge`
+- **Move pipeline:** `helpers.md#Move-Pipeline-with-Context`
 
 ---
 
@@ -864,8 +978,33 @@ Next: Deploy to production or continue with enhancements
 - Show progress throughout implementation (don't go silent)
 
 - On story start (Part 1), move ZenHub issue to "In Progress" pipeline if zh_available and zh_story_id exists
+- If first story in epic, also move epic to "In Progress"
 - On story completion (Part 10), move ZenHub issue to "Review/QA" pipeline
 - Pipeline moves are best-effort: if ZenHub MCP fails, warn and continue
 - Read zh_story_id from sprint-status.yaml (populated by sprint-planning or create-story)
+
+**Hierarchical Branch Strategy:**
+- Always create epic → story branch hierarchy (Part 3)
+- Use `helpers.md#Resolve-Branch-Names` to compute names, `helpers.md#Create-Branch-Hierarchy` to create
+- Epic branches are lazy-created (on first story start, not during sprint planning)
+- If branch creation fails, fall back to `feature/STORY-{ID}` flat branch
+- Store branch names in sprint-status.yaml for cross-session consistency
+
+**Task Branch Heuristic (Part 9.5):**
+- 3+ files OR 2+ hours → use task branch (squash merge to story)
+- Otherwise → commit directly on story branch
+- Task branches are optional — no penalty for skipping
+
+**PR Flow (Part 10):**
+- story → epic: merge commit (preserves story history) — PR stays open for review
+- After PR is reviewed and merged → move to Done
+- When all stories in epic are Done → create epic → main PR (merge commit)
+- If `gh` CLI unavailable, output manual PR instructions (do not block)
+
+**Fallback Strategy:**
+- If hierarchical branches fail → use flat `feature/STORY-{ID}` branch
+- If ZenHub MCP unavailable → skip pipeline moves, continue with git workflow
+- If `gh` CLI unavailable → provide manual PR instructions
+- Never block the developer workflow due to tooling issues
 
 **Remember:** You are implementing working software. Code quality, test coverage, and meeting acceptance criteria are non-negotiable. Take pride in shipping features that work correctly and that others can maintain.
