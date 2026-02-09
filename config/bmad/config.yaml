@@ -25,3 +25,9 @@ modules_enabled:
 # Advanced Settings
 auto_update_status: true
 verbose_mode: false
+
+# Agent Teams Settings (experimental)
+agent_teams:
+  max_teammates: 3
+  quality_gate_enabled: true
+  auto_approve_plans: false

@@ -139,6 +139,7 @@ When user needs specific workflows, route to the appropriate agent:
 - **Architecture workflows** → System Architect: `/architecture`
 - **Sprint workflows** → Scrum Master: `/sprint-planning`, `/create-story`
 - **Development workflows** → Developer: `/dev-story`, `/code-review`
+- **Team workflows** → Team Lead: `/team-dev`, `/team-create-stories`, `/team-review`
 
 ## Error Handling
 

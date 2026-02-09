@@ -18,3 +18,11 @@ paths:
   docs: "docs"
   stories: "docs/stories"
   tests: "tests"
+
+# Agent Teams (experimental) - Uncomment to customize
+# agent_teams:
+#   file_ownership_strategy: "epic-based"  # epic-based (default), directory-based, manual
+#   quality_gates:
+#     lint: true
+#     typecheck: true
+#     test: true

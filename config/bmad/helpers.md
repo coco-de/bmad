@@ -596,4 +596,263 @@ To create branch hierarchy: See helpers.md#Create-Branch-Hierarchy
 To create task branch: See helpers.md#Create-Task-Branch
 To create PR: See helpers.md#Create-PR-and-Merge
 To move pipeline: See helpers.md#Move-Pipeline-with-Context
+To check Agent Teams: See helpers.md#Check-Agent-Teams-Available
+To spawn teammate: See helpers.md#Spawn-BMAD-Teammate
+To create team tasks: See helpers.md#Create-Team-Task-List
+To collect results: See helpers.md#Collect-Team-Results
+To run quality gate: See helpers.md#Team-Quality-Gate
+```
+
+## Agent Teams Integration
+
+### Check Agent Teams Available
+```
+Purpose: Detect if Claude Code Agent Teams feature is available
+
+Steps:
+1. Check environment variable:
+   CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS
+
+2. If set and truthy:
+   - Set teams_available = true
+   - Log: "✓ Agent Teams available (experimental)"
+
+3. If NOT set or falsy:
+   - Set teams_available = false
+   - Log: "⚠ Agent Teams not available. Use sequential workflows instead."
+   - Provide guidance:
+     "To enable Agent Teams, set the environment variable:
+      CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1
+      Then restart Claude Code."
+
+4. Return teams_available flag
+```
+
+### Spawn BMAD Teammate
+```
+Purpose: Launch a teammate with role-specific context and constraints
+
+Input: role (developer|reviewer|story-creator), context_payload
+Requires: teams_available = true
+
+Role-specific prompt construction:
+
+--- developer role ---
+Prompt:
+  "You are a BMAD Developer teammate. Your assignment:
+
+   ## Story
+   {story_document_content}
+
+   ## Architecture Summary
+   {architecture_key_sections}
+
+   ## File Ownership
+   You MUST only modify files in these paths:
+   {owned_file_paths}
+   Do NOT modify any files outside your ownership boundary.
+
+   ## Branch
+   Work on branch: {story_branch}
+   Epic branch: {epic_branch}
+
+   ## Quality Standards
+   - All acceptance criteria must pass
+   - Write tests alongside implementation
+   - Run lint/typecheck before completing
+   - Follow existing project conventions
+
+   ## Constraints
+   - Do NOT modify sprint-status.yaml (Lead only)
+   - Report completion via task update
+   - If blocked, update task with blocker description"
+
+--- reviewer role ---
+Prompt:
+  "You are a BMAD Reviewer teammate. Your assignment:
+
+   ## Review Target
+   Document: {document_path}
+   Type: {document_type}
+
+   ## Review Perspective
+   Role: {review_perspective} (PM|Architect|Developer|Scrum Master)
+   Focus: {review_focus_description}
+
+   ## Checklist
+   {review_checklist_items}
+
+   ## Output
+   Write your review to: {review_output_path}
+   Format:
+   - Overall Assessment: (Pass/Conditional Pass/Fail)
+   - Strengths: (bullet list)
+   - Issues: (numbered, with severity: Critical/Major/Minor)
+   - Recommendations: (bullet list)
+
+   ## Constraints
+   - Do NOT modify the reviewed document
+   - Do NOT modify sprint-status.yaml (Lead only)
+   - Report completion via task update"
+
+--- story-creator role ---
+Prompt:
+  "You are a BMAD Story Creator teammate. Your assignment:
+
+   ## Epic
+   {epic_name}: {epic_description}
+
+   ## Stories to Create
+   {story_id_list_with_titles}
+
+   ## Story Template
+   Follow the standard BMAD story template:
+   - User Story (As a... I want... So that...)
+   - Description (Background, Scope, User Flow)
+   - Acceptance Criteria (testable, specific)
+   - Technical Notes (components, APIs, DB changes)
+   - Dependencies
+   - Definition of Done
+   - Story Points (Fibonacci: 1,2,3,5,8,13)
+
+   ## Architecture Context
+   {architecture_key_sections}
+
+   ## Output
+   Write each story to: docs/stories/{story_id}.md
+   Each teammate creates DIFFERENT story files — no conflicts.
+
+   ## Constraints
+   - Do NOT modify sprint-status.yaml (Lead only)
+   - Do NOT modify other teammates' story files
+   - Report completion via task update"
+
+Common footer appended to ALL roles:
+  "IMPORTANT CONSTRAINTS:
+   - Never modify sprint-status.yaml — only the Lead updates status files
+   - Complete your work and mark your task as completed
+   - If you encounter issues, describe them in your task update"
+```
+
+### Create Team Task List
+```
+Purpose: Create shared task list for teammate coordination
+
+Input: assignments (array of {teammate_role, description, context})
+Output: task_ids array
+
+Steps:
+1. For each assignment:
+   a. Call TaskCreate:
+      - subject: "{role}: {short_description}"
+      - description: Full assignment details including file ownership
+      - activeForm: "{role_verb} {short_description}"
+   b. Store returned task_id
+
+2. Set up dependencies (if any):
+   For each dependency pair (blocking_task_id, blocked_task_id):
+     Call TaskUpdate:
+       - taskId: blocked_task_id
+       - addBlockedBy: [blocking_task_id]
+
+3. Return array of task_ids for monitoring
+
+Example:
+  TaskCreate: "developer: Implement STORY-001 user registration"
+  TaskCreate: "developer: Implement STORY-002 user login"
+  TaskUpdate: task_2 addBlockedBy [task_1]  (if STORY-002 depends on STORY-001)
+```
+
+### Collect Team Results
+```
+Purpose: Gather and summarize teammate outputs after completion
+
+Input: task_ids (from Create-Team-Task-List)
+Output: results summary
+
+Steps:
+1. Poll task status:
+   Call TaskList
+   Filter to team task_ids
+   Check status of each task
+
+2. For each completed task:
+   a. Call TaskGet(task_id) to retrieve final details
+   b. Identify output artifacts:
+      - developer: Modified files, test results
+      - reviewer: Review document at {review_output_path}
+      - story-creator: Story documents in docs/stories/
+
+3. For each still-in-progress task:
+   - Log: "⏳ {task_subject}: still in progress"
+
+4. Build integrated summary:
+   Completed: {count}/{total}
+   Artifacts:
+     - {file_path_1}: {description}
+     - {file_path_2}: {description}
+   Issues Reported:
+     - {task_id}: {issue_description} (if any)
+
+5. Return summary object
+```
+
+### Team Quality Gate
+```
+Purpose: Run automated quality checks on teammate work
+
+Input: story_branch (branch to validate)
+Output: { passed: boolean, results: object }
+
+Steps:
+1. Detect project type:
+   - Check for package.json → Node.js/TypeScript
+   - Check for pubspec.yaml → Flutter/Dart
+   - Check for requirements.txt/pyproject.toml → Python
+   - Check for Cargo.toml → Rust
+   - Check for go.mod → Go
+
+2. Switch to story branch:
+   git checkout {story_branch}
+
+3. Run quality checks based on project type:
+
+   Node.js/TypeScript:
+     lint: npm run lint (or npx eslint .)
+     typecheck: npx tsc --noEmit (if tsconfig.json exists)
+     test: npm test
+
+   Flutter/Dart:
+     lint: dart analyze (or melos run analyze)
+     format: dart format --set-exit-if-changed .
+     test: flutter test (or melos run test)
+
+   Python:
+     lint: pylint src/ (or ruff check .)
+     typecheck: mypy src/ (if mypy installed)
+     test: pytest
+
+4. Collect results:
+   lint_passed: boolean
+   typecheck_passed: boolean
+   tests_passed: boolean
+   test_count: number
+   coverage: percentage (if available)
+
+5. Determine gate result:
+   passed = lint_passed AND typecheck_passed AND tests_passed
+
+6. Return:
+   {
+     passed: boolean,
+     lint: { passed, output_summary },
+     typecheck: { passed, output_summary },
+     tests: { passed, count, coverage },
+     branch: story_branch
+   }
+
+On failure:
+  Log: "❌ Quality gate failed for {story_branch}"
+  Log details of each failed check
+  Return passed = false (do NOT auto-fix — report to Lead for decision)
 ```

@@ -13,7 +13,7 @@ BMAD Method는 4개의 Phase로 구성된 애자일 개발 프레임워크입니
 | 1 | Analysis | product-brief, research, brainstorm | Business Analyst, Creative Intelligence |
 | 2 | Planning | prd, tech-spec | Product Manager |
 | 3 | Solutioning | architecture, create-ux-design, solutioning-gate-check | System Architect, UX Designer |
-| 4 | Implementation | sprint-planning, create-story, dev-story | Scrum Master, Developer |
+| 4 | Implementation | sprint-planning, create-story, dev-story, team-dev, team-create-stories, team-review | Scrum Master, Developer, Team Lead |
 
 ## 프로젝트 레벨
 
@@ -88,6 +88,11 @@ document_output_language: "English"
 /bmad:sprint-planning        # 스프린트 계획 수립
 /bmad:create-story STORY-001 # 개별 스토리 상세 작성
 /bmad:dev-story STORY-001    # 스토리 구현
+
+# Phase 4: 병렬 실행 (Agent Teams)
+/bmad:team-dev               # 병렬 스토리 개발
+/bmad:team-create-stories    # 병렬 스토리 문서 생성
+/bmad:team-review docs/prd.md # 다관점 문서 리뷰
 ```
 
 ### 일반적인 흐름 예시
@@ -121,7 +126,7 @@ document_output_language: "English"
 │       ├── sprint-status.template.yaml
 │       └── tech-spec.md
 │
-├── commands/bmad/                   # 슬래시 커맨드 (15개)
+├── commands/bmad/                   # 슬래시 커맨드 (18개)
 │   ├── architecture.md
 │   ├── brainstorm.md
 │   ├── create-agent.md
@@ -134,11 +139,14 @@ document_output_language: "English"
 │   ├── research.md
 │   ├── solutioning-gate-check.md
 │   ├── sprint-planning.md
+│   ├── team-create-stories.md
+│   ├── team-dev.md
+│   ├── team-review.md
 │   ├── tech-spec.md
 │   ├── workflow-init.md
 │   └── workflow-status.md
 │
-└── skills/bmad/                     # 에이전트 스킬 (9개)
+└── skills/bmad/                     # 에이전트 스킬 (10개)
     ├── core/
     │   └── bmad-master/SKILL.md     # 코어 오케스트레이터
     ├── bmm/                         # BMad Method 에이전트
@@ -147,6 +155,7 @@ document_output_language: "English"
     │   ├── developer/SKILL.md       # Developer
     │   ├── pm/SKILL.md              # Product Manager
     │   ├── scrum-master/SKILL.md    # Scrum Master
+    │   ├── team-lead/SKILL.md      # Team Lead (Agent Teams)
     │   └── ux-designer/SKILL.md     # UX Designer
     ├── bmb/                         # BMad Builder
     │   └── builder/SKILL.md         # Workflow Builder
@@ -176,6 +185,35 @@ BMAD는 ZenHub MCP 서버와 연동하여 이슈를 자동 관리합니다.
 ### ZenHub MCP 설정
 
 Claude Code에서 ZenHub MCP 서버를 설정하면 자동으로 연동됩니다. 별도 BMAD 설정은 필요하지 않습니다.
+
+## Agent Teams 연동
+
+BMAD는 Claude Code Agent Teams(실험적 기능)와 연동하여 Phase 4 작업을 병렬로 실행할 수 있습니다.
+
+### 활성화 방법
+
+```bash
+# 환경변수 설정 후 Claude Code 실행
+CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1
+```
+
+### 지원 기능
+
+| 커맨드 | 설명 | 순차 대안 |
+|--------|------|----------|
+| `/bmad:team-dev` | 여러 스토리를 병렬로 개발 (teammate별 파일 소유권) | `/bmad:dev-story` |
+| `/bmad:team-create-stories` | 여러 스토리 문서를 병렬로 생성 | `/bmad:create-story` |
+| `/bmad:team-review` | 다관점(PM/Architect/Developer) 병렬 리뷰 | 수동 리뷰 |
+
+### Graceful Degradation
+
+Agent Teams가 활성화되지 않은 환경에서 `team-*` 커맨드를 실행하면, 해당하는 순차 워크플로우를 안내하고 종료됩니다. 기존 워크플로우에는 영향을 주지 않습니다.
+
+### 핵심 설계
+
+- **Lead-Only Status**: sprint-status.yaml은 Lead만 수정 (동시 수정 충돌 방지)
+- **파일 소유권**: 각 teammate에게 수정 가능한 파일 경계를 명시적으로 할당
+- **Quality Gate**: teammate 작업 완료 시 자동 린트/타입체크/테스트 실행
 
 ## 프로젝트 산출물
 
