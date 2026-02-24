@@ -45,6 +45,36 @@ cp -r commands/bmad/ ~/.claude/commands/bmad/
 cp -r skills/bmad/ ~/.claude/skills/bmad/
 ```
 
+### 업데이트
+
+기존 설치를 최신 버전으로 업데이트하려면 설치 명령을 다시 실행합니다:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/coco-de/bmad/main/install.sh | bash
+```
+
+업데이트 시 덮어쓰이는 파일과 보존되는 파일:
+
+| 경로 | 업데이트 시 | 설명 |
+|------|-----------|------|
+| `~/.claude/commands/bmad/` | **덮어쓰기** | 슬래시 커맨드 |
+| `~/.claude/commands/zenhub/` | **덮어쓰기** | ZenHub 커맨드 |
+| `~/.claude/skills/bmad/` | **덮어쓰기** | 에이전트 스킬 |
+| `~/.claude/config/bmad/helpers.md` | **덮어쓰기** | 헬퍼 유틸리티 |
+| `~/.claude/config/bmad/templates/` | **덮어쓰기** | 문서 템플릿 |
+| `~/.claude/config/bmad/config.yaml` | **덮어쓰기** | 글로벌 설정 |
+| `{project}/bmad/config.yaml` | **보존** | 프로젝트별 설정 |
+| `{project}/bmad/zenhub-conventions.yaml` | **보존** | ZenHub 캐시 |
+| `{project}/docs/` | **보존** | 모든 프로젝트 산출물 |
+
+> **주의:** `~/.claude/config/bmad/config.yaml`의 `user_name` 등 개인 설정이 초기화됩니다. 업데이트 후 다시 설정하거나, 업데이트 전에 백업하세요:
+> ```bash
+> # 백업 후 업데이트
+> cp ~/.claude/config/bmad/config.yaml ~/.claude/config/bmad/config.yaml.bak
+> curl -fsSL https://raw.githubusercontent.com/coco-de/bmad/main/install.sh | bash
+> # 개인 설정 복원 (user_name, user_skill_level 등)
+> ```
+
 ### 설치 후 설정
 
 1. `~/.claude/config/bmad/config.yaml`을 열어 사용자 정보를 수정합니다:
@@ -124,7 +154,8 @@ document_output_language: "English"
 │       ├── prd.md
 │       ├── product-brief.md
 │       ├── sprint-status.template.yaml
-│       └── tech-spec.md
+│       ├── tech-spec.md
+│       └── zenhub-conventions.template.yaml
 │
 ├── commands/bmad/                   # 슬래시 커맨드 (18개)
 │   ├── architecture.md
@@ -145,6 +176,11 @@ document_output_language: "English"
 │   ├── tech-spec.md
 │   ├── workflow-init.md
 │   └── workflow-status.md
+│
+├── commands/zenhub/                 # ZenHub 커맨드 (3개)
+│   ├── create-epic.md
+│   ├── sequential.md
+│   └── workflow.md
 │
 └── skills/bmad/                     # 에이전트 스킬 (10개)
     ├── core/
