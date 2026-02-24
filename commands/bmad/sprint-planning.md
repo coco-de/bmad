@@ -35,6 +35,8 @@ You are the Scrum Master, executing the **Sprint Planning** workflow.
    - All functional requirements
    - Story estimates (if already present)
 6. **Load ZenHub context** per `helpers.md#Load-ZenHub-Context`
+   - This automatically loads conventions cache first (per `helpers.md#Load-ZenHub-Conventions`)
+   - Check zh_sub_tasks_enabled for Sub-task support
 
 ---
 
@@ -121,6 +123,22 @@ Project Inventory:
    - Stories map back to epics/requirements
    - No orphaned requirements
 
+5. **Sub-task decomposition (if zh_sub_tasks_enabled):**
+   - For stories estimated at 5+ points, suggest sub-task breakdown
+   - Sub-tasks represent discrete implementation units within a story
+   - Each sub-task should be completable in 1-4 hours
+   - Present sub-task suggestions for user approval:
+     ```
+     STORY-001 (5 pts) suggested sub-tasks:
+       - Implement data model and migration
+       - Create API endpoint with validation
+       - Build frontend component
+       - Write unit and integration tests
+
+     Add sub-tasks? (y/n/edit)
+     ```
+   - Store approved sub-tasks in sprint plan for later ZenHub sync
+
 **Typical breakdown patterns:**
 
 **Authentication Epic →**
@@ -188,6 +206,17 @@ Total Points: {sum} points
 - No story >8 points (break down if needed)
 - Point distribution is balanced
 - Infrastructure stories are included
+
+**Story Point Correction Table:**
+When sub-tasks are enabled, verify point estimates against sub-task count:
+
+| Points | Expected Sub-tasks | If More | If Fewer |
+|--------|-------------------|---------|----------|
+| 1-2    | 0-2               | Bump to 3 pts | OK |
+| 3      | 2-4               | Bump to 5 pts | OK |
+| 5      | 3-6               | Bump to 8 pts | Consider removing sub-tasks |
+| 8      | 5-10              | Break into 2 stories | OK |
+| 13+    | **ALWAYS break down** | Split into 2-3 stories | Still split |
 
 ---
 
@@ -598,22 +627,61 @@ Per `helpers.md#Update-Workflow-Status`:
 
 **Skip this part if `zh_available = false`.**
 
+**Step 0: Preview and Confirm**
+
+Before creating any ZenHub issues, display a full preview:
+
+```
+=== ZenHub Batch Sync Preview ===
+
+Issues to create:
+  Epics: {count}
+  Stories: {count}
+  Sub-tasks: {count}  (if zh_sub_tasks_enabled)
+
+  [Epic] {epic_1_name}
+    [Story] {story_1_title} ({points} pts)
+      [Sub-task] {sub_1_title}  (if sub-tasks)
+      [Sub-task] {sub_2_title}
+    [Story] {story_2_title} ({points} pts)
+
+  [Epic] {epic_2_name}
+    [Story] {story_3_title} ({points} pts)
+    ...
+
+Sprint Assignment: {sprint_name}
+Pipeline: Sprint Backlog (current sprint) / Product Backlog (future)
+
+Total Issues: {total_count}
+Total Points: {total_points}
+
+[C]onfirm - Create all issues
+[S]kip sub-tasks - Create epics + stories only
+[A]bort - Skip ZenHub sync entirely
+```
+
+Wait for user confirmation. If abort, skip Part 11 entirely.
+
 **Step 1: Sync Epics**
 
 For each epic in the sprint plan:
-1. Call `helpers.md#Sync-Epic-to-ZenHub` with:
+1. Generate epic body per `helpers.md#Generate-Epic-Body`:
+   - epic_name, epic_description, stories list, sprint info
+2. Call `helpers.md#Sync-Epic-to-ZenHub` with:
    - epic_name: Epic title from plan
-   - epic_description: Epic summary and story list (markdown)
+   - epic_description: Generated body (markdown)
    - sprint_start_date / sprint_end_date: From sprint dates
-2. Collect `zh_epic_id` for each epic
-3. Log: `✓ Epic synced: [Epic] {name} → #{issue_number}`
+3. Collect `zh_epic_id` for each epic
+4. Log: `✓ Epic synced: [Epic] {name} → #{issue_number}`
 
 **Step 2: Sync Stories**
 
 For each story in the sprint plan:
-1. Call `helpers.md#Sync-Story-to-ZenHub` with:
+1. Generate story body per `helpers.md#Generate-Story-Body`:
+   - story data (user story, AC, technical notes)
+2. Call `helpers.md#Sync-Story-to-ZenHub` with:
    - story_title: Story title
-   - story_body: User story + acceptance criteria + technical notes (markdown)
+   - story_body: Generated body (markdown)
    - story_points: Estimated points
    - zh_epic_id: Parent epic's ZenHub ID (from Step 1)
    - sprint_id: `zh_active_sprint.id` (current sprint) or `zh_next_sprint.id` (future sprint)
@@ -675,11 +743,35 @@ For each epic and story, compute branch names using `helpers.md#Resolve-Branch-N
      └── story/STORY-009-widgetbook-update
    ```
 
+**Step 6: Sync Sub-tasks** (if zh_sub_tasks_enabled and user confirmed sub-tasks in Step 0)
+
+For each story that has approved sub-tasks:
+1. For each sub-task:
+   a. Generate sub-task body per `helpers.md#Generate-Sub-task-Body`
+   b. Call `helpers.md#Sync-Sub-task-to-ZenHub`:
+      - sub_task_title, sub_task_body
+      - zh_story_id (parent story from Step 2)
+   c. Collect zh_sub_task_id, issue number
+2. Update sprint-status.yaml story entry with sub_tasks array:
+   ```yaml
+   sub_tasks:
+     - id: "sub-task-001"
+       title: "{sub_task_title}"
+       status: "not-started"
+       zh_issue_id: "{zh_sub_task_id}"
+       zh_issue_number: {issue_number}
+       zh_issue_url: "{url}"
+       zh_pipeline: "Sprint Backlog"
+   ```
+3. Update metrics: total_sub_tasks
+4. Log: `✓ Sub-task synced: #{issue_number} (parent: #{story_number})`
+
 **Display ZenHub sync results in summary:**
 ```
 ZenHub Sync Results:
 - Epics created: {count}/{total}
 - Stories created: {count}/{total}
+- Sub-tasks created: {count}/{total}  (if sub-tasks enabled)
 - Sprint assignments: {count}
 - Dependencies synced: {count}
 - Branch names pre-computed: {count} epics, {count} stories
@@ -738,10 +830,15 @@ Or run /create-story STORY-XXX to generate detailed story docs
 - **Update workflow status:** `helpers.md#Update-Workflow-Status`
 - **Recommend next:** `helpers.md#Determine-Next-Workflow`
 - **ZenHub context:** `helpers.md#Load-ZenHub-Context`
+- **ZenHub conventions:** `helpers.md#Load-ZenHub-Conventions`
 - **Sync epic:** `helpers.md#Sync-Epic-to-ZenHub`
 - **Sync story:** `helpers.md#Sync-Story-to-ZenHub`
+- **Sync sub-task:** `helpers.md#Sync-Sub-task-to-ZenHub`
 - **Sync deps:** `helpers.md#Sync-Story-Dependencies-to-ZenHub`
 - **Store xref:** `helpers.md#Store-ZenHub-Cross-Reference`
+- **Generate epic body:** `helpers.md#Generate-Epic-Body`
+- **Generate story body:** `helpers.md#Generate-Story-Body`
+- **Generate sub-task body:** `helpers.md#Generate-Sub-task-Body`
 - **Resolve branches:** `helpers.md#Resolve-Branch-Names`
 
 ---
@@ -823,10 +920,14 @@ Or run /create-story STORY-XXX to generate detailed story docs
 - Hand off to Developer when ready for implementation
 
 - After local plan is complete (Part 10), sync to ZenHub (Part 11) if zh_available
+- Always show preview (Step 0) and wait for confirmation before creating ZenHub issues
 - Use `createGitHubIssue` (not `createZenhubIssue`) per workspace convention
+- Use Generate Body helpers for consistent issue formatting (Epic/Story/Sub-task bodies)
 - Set issue types: Epic for epics, Feature for stories
 - Assign stories to active sprint (Sprint Backlog) or future sprints (Product Backlog)
 - Store ZenHub cross-references in sprint-status.yaml for downstream workflows
+- Sub-tasks are opt-in: only suggest for 5+ point stories when zh_sub_tasks_enabled = true
+- Sub-task sync (Step 6) happens after stories, as each sub-task needs parent zh_story_id
 - If ZenHub sync fails partially, log what succeeded and continue
 - After ZenHub sync, pre-compute branch names (Part 11 Step 5) using `helpers.md#Resolve-Branch-Names`
 - Store branch names in sprint-status.yaml for dev-story to use (epic_branches + story branch/epic_branch fields)

@@ -342,6 +342,54 @@ Ask: "How complex is this story? Let's estimate story points."
 
 ---
 
+### Part 9.5: Sub-task Decomposition (Optional)
+
+**Skip if zh_sub_tasks_enabled = false or story points < sub_tasks.min_story_points.**
+
+If sub-tasks are enabled and story is large enough:
+
+1. **Auto-generate sub-tasks** per `helpers.md#Auto-Generate-Sub-tasks`:
+   - Parse the story's acceptance criteria → validation sub-tasks
+   - Parse technical notes → implementation sub-tasks
+   - Parse definition of done → test sub-tasks
+
+2. **Present sub-task preview:**
+   ```
+   Suggested Sub-tasks for STORY-{ID} ({points} pts):
+
+   Implementation:
+     1. {implementation_task_1}
+     2. {implementation_task_2}
+
+   Validation:
+     3. Validate: {AC_1_summary}
+     4. Validate: {AC_2_summary}
+
+   Testing:
+     5. Test: {test_scenario}
+
+   Total: {count} sub-tasks
+
+   Add these sub-tasks? (y/n/edit)
+   ```
+
+3. **If approved:**
+   - Store sub-tasks in story document under "## Sub-tasks" section
+   - Sub-tasks will be synced to ZenHub in Part 10 (if zh_available)
+
+4. **Add to story document:**
+   ```markdown
+   ## Sub-tasks
+
+   | # | Title | Type | Status |
+   |---|-------|------|--------|
+   | 1 | {title} | Implementation | Not Started |
+   | 2 | {title} | Validation | Not Started |
+   | 3 | {title} | Test | Not Started |
+   ```
+
+---
+
 ## Generate Story Document
 
 **Create story document:**
@@ -486,6 +534,28 @@ Per `helpers.md#Update-Sprint-Status`:
 
 4. **Log result:** `✓ Story synced to ZenHub: #{issue_number} ({url})`
 
+5. **Sync Sub-tasks** (if zh_sub_tasks_enabled and sub-tasks were created in Part 9.5):
+
+   For each sub-task from Part 9.5:
+   a. Generate sub-task body per `helpers.md#Generate-Sub-task-Body`
+   b. Call `helpers.md#Sync-Sub-task-to-ZenHub`:
+      - sub_task_title, sub_task_body
+      - zh_story_id (parent, from step 2 above)
+   c. Store zh_sub_task_id, issue number, URL
+   d. Log: `✓ Sub-task synced: #{sub_issue_number} (parent: #{story_issue_number})`
+
+6. **Update sprint-status.yaml** with sub_tasks array:
+   ```yaml
+   sub_tasks:
+     - id: "sub-task-001"
+       title: "{title}"
+       status: "not-started"
+       zh_issue_id: "{zh_sub_task_id}"
+       zh_issue_number: {number}
+       zh_issue_url: "{url}"
+       zh_pipeline: "Sprint Backlog"
+   ```
+
 ---
 
 ## Display Summary
@@ -510,6 +580,7 @@ Epic Branch: epic/EPIC-{number}-{slug}
 ZenHub: #{issue_number} ({url})  (if zh_available)
 Pipeline: Sprint Backlog
 Sprint: {sprint_name}
+Sub-tasks: {count} synced  (if sub-tasks created)
 
 Ready for implementation!
 Run /dev-story STORY-{ID} to begin development.
@@ -542,6 +613,10 @@ Run /sprint-status
 - **Save document:** `helpers.md#Save-Output-Document`
 - **ZenHub context:** `helpers.md#Load-ZenHub-Context`
 - **Sync story:** `helpers.md#Sync-Story-to-ZenHub`
+- **Sync sub-task:** `helpers.md#Sync-Sub-task-to-ZenHub`
+- **Auto-generate sub-tasks:** `helpers.md#Auto-Generate-Sub-tasks`
+- **Generate story body:** `helpers.md#Generate-Story-Body`
+- **Generate sub-task body:** `helpers.md#Generate-Sub-task-Body`
 - **Store xref:** `helpers.md#Store-ZenHub-Cross-Reference`
 
 ---
@@ -580,6 +655,9 @@ Run /sprint-status
 - Use `createGitHubIssue` with `[Story]` prefix per workspace convention
 - Link story to parent epic via zh_epic_id if available
 - Store ZenHub cross-reference in both story doc and sprint-status.yaml
+- Sub-task decomposition (Part 9.5) is optional: only for stories >= min_story_points when zh_sub_tasks_enabled
+- Sub-tasks are synced to ZenHub after the parent story (they need zh_story_id as parent)
+- Use Generate Body helpers for consistent issue formatting
 - If ZenHub sync fails, warn and continue — local document is still valid
 
 **Remember:** A well-defined story = smooth development. Vague stories = confusion, rework, and delays.

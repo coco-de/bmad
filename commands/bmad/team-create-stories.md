@@ -44,6 +44,8 @@ You are the Team Lead, executing the **Team Create Stories** workflow.
    - Find all stories without story documents (no `docs/stories/STORY-{ID}.md`)
    - Or accept user-specified story IDs as input
 9. **Load max_teammates** from config `agent_teams.max_teammates` (default: 3)
+10. **Check sub-task support:**
+    - If zh_sub_tasks_enabled: Stories with 5+ points will include auto-generated sub-tasks
 
 ---
 
@@ -112,6 +114,13 @@ For each teammate:
 
 Each teammate creates stories independently — no file conflicts since each writes to unique `docs/stories/STORY-{ID}.md` paths.
 
+**Sub-task generation context** (if zh_sub_tasks_enabled):
+Include in each teammate's context:
+- "For stories with {min_story_points}+ points, include a Sub-tasks section"
+- "Sub-tasks should be discrete implementation units (1-4 hours each)"
+- "Categories: Implementation, Validation, Testing"
+- Teammates generate sub-task lists in story documents; Lead syncs to ZenHub in Part 4
+
 ---
 
 ## Part 3: Monitor & Collect
@@ -173,6 +182,16 @@ If zh_available:
        - Update story document with ZenHub link
        - Update sprint-status.yaml with zh_issue_id
     4. Log: "✓ Synced STORY-{ID} → ZenHub #{issue_number}"
+
+  If zh_sub_tasks_enabled:
+    For each story with sub-tasks in its document:
+      5. For each sub-task:
+         a. Generate sub-task body per helpers.md#Generate-Sub-task-Body
+         b. Call helpers.md#Sync-Sub-task-to-ZenHub:
+            - sub_task_title, sub_task_body
+            - zh_story_id (parent, from step 2 above)
+         c. Store zh_sub_task_id in sprint-status sub_tasks array
+         d. Log: "  ✓ Sub-task: #{sub_issue_number} (parent: #{story_number})"
 ```
 
 **Step 3: Display summary:**
@@ -194,6 +213,7 @@ Total Story Points: {sum}
 Documents: docs/stories/
 
 ZenHub: {count} stories synced to Sprint Backlog  (if zh_available)
+ZenHub: {count} sub-tasks synced  (if sub-tasks created)
 
 Next Steps:
   1. Review stories: Read docs/stories/STORY-{ID}.md
@@ -213,6 +233,8 @@ Next Steps:
 - **Collect results:** `helpers.md#Collect-Team-Results`
 - **ZenHub context:** `helpers.md#Load-ZenHub-Context`
 - **Sync story:** `helpers.md#Sync-Story-to-ZenHub`
+- **Sync sub-task:** `helpers.md#Sync-Sub-task-to-ZenHub`
+- **Generate sub-task body:** `helpers.md#Generate-Sub-task-Body`
 - **Store xref:** `helpers.md#Store-ZenHub-Cross-Reference`
 
 ---
@@ -227,5 +249,8 @@ Next Steps:
 - Story documents must follow standard BMAD template format
 - Validate each story has required sections before accepting
 - If a teammate fails, its stories can be created manually with `/create-story`
+- Sub-task generation is included in teammate context when zh_sub_tasks_enabled
+- Sub-task ZenHub sync is batched by Lead after all teammates complete (not by teammates)
+- Sub-tasks are only generated for stories meeting min_story_points threshold
 
 **Remember:** Story creation is inherently parallelizable since each story is an independent document. The main value is time savings when creating 3+ stories.

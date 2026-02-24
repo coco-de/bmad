@@ -36,6 +36,10 @@ You are the Developer, executing the **Dev Story** workflow.
    - Compute epic_branch, story_branch, task_prefix from sprint-status story entry
    - If story already has `branch` field in sprint-status, use that instead
 9. **Check if branches exist:** `git branch -a` to see which branches already exist
+10. **Load sub-tasks** (if zh_sub_tasks_enabled):
+    - Check story entry in sprint-status.yaml for `sub_tasks[]` array
+    - If sub-tasks exist, these will serve as implementation checklist (Part 2)
+    - Track sub-task zh_issue_ids for pipeline management during implementation
 
 ---
 
@@ -67,6 +71,7 @@ As a {type}, I want to {capability}, so that {benefit}
 Acceptance Criteria: {count}
 Story Points: {points}
 Dependencies: {list}
+Sub-tasks: {count} (from ZenHub)  ← if sub-tasks loaded
 
 I'll now plan the implementation...
 ```
@@ -135,7 +140,26 @@ Based on story size and type, typical task breakdown:
 5. Test infrastructure
 6. Document setup
 
-**Use TodoWrite** to create task list for story
+**If sub-tasks exist (from Pre-Flight step 10):**
+Use sub-tasks as the primary implementation checklist:
+```
+Implementation Checklist (from ZenHub Sub-tasks):
+- [ ] #{sub_num_1} {sub_task_title_1}
+- [ ] #{sub_num_2} {sub_task_title_2}
+- [ ] #{sub_num_3} {sub_task_title_3}
+...
+```
+
+As each sub-task is completed, move its ZenHub pipeline:
+```
+If zh_available and sub_task has zh_issue_id:
+  Call helpers.md#Move-Pipeline-with-Context(zh_sub_task_id, "In Progress")
+  ... (after completing the sub-task)
+  Call helpers.md#Move-Pipeline-with-Context(zh_sub_task_id, "Done")
+  Update sprint-status sub_task status → "done"
+```
+
+**If no sub-tasks, use TodoWrite** to create task list for story
 
 **Example:**
 ```
@@ -862,6 +886,8 @@ main
 
 PR: {pr_url} (story → epic, merge commit)
 
+Sub-tasks: {completed}/{total} done     (if sub-tasks exist)
+
 ZenHub Pipeline History:        (if zh_available)
   Sprint Backlog → In Progress → Review/QA
   Epic: #{epic_number} In Progress
@@ -982,6 +1008,9 @@ Next: Deploy to production or continue with enhancements
 - On story completion (Part 10), move ZenHub issue to "Review/QA" pipeline
 - Pipeline moves are best-effort: if ZenHub MCP fails, warn and continue
 - Read zh_story_id from sprint-status.yaml (populated by sprint-planning or create-story)
+- If sub-tasks exist (Pre-Flight step 10), use them as implementation checklist in Part 2
+- Move sub-task pipelines during implementation: "In Progress" when starting, "Done" when completed
+- Update sprint-status sub_task entries as they complete (status, zh_pipeline)
 
 **Hierarchical Branch Strategy:**
 - Always create epic → story branch hierarchy (Part 3)

@@ -242,11 +242,42 @@ Merge strategy reference:
 
 ## ZenHub Integration
 
+### Load ZenHub Conventions
+```
+Purpose: Load cached ZenHub IDs from conventions file; merge with live MCP data if available
+
+Path: {project-root}/bmad/zenhub-conventions.yaml
+
+Steps:
+1. Try to read bmad/zenhub-conventions.yaml
+   - If exists: Parse YAML, populate zh_conventions cache
+   - If not exists: zh_conventions = empty (will be populated by Load ZenHub Context)
+
+2. Extract cached values:
+   - zh_github_repo_id = conventions.repository.id
+   - zh_org_id = conventions.organization.id
+   - zh_issue_types = conventions.issue_types (epic, feature, task, bug)
+   - zh_pipelines = conventions.pipelines (product_backlog, sprint_backlog, etc.)
+   - zh_sub_tasks_enabled = conventions.sub_tasks.enabled
+   - zh_issue_creation = conventions.issue_creation
+
+3. If all required IDs present (repository.id, at least epic + feature issue types, pipelines):
+   - Set zh_conventions_loaded = true
+   - Log: "✓ ZenHub conventions loaded from cache"
+   Else:
+   - Set zh_conventions_loaded = false
+   - Log: "⚠ ZenHub conventions incomplete — MCP discovery required"
+
+4. Return zh_conventions object
+```
+
 ### Load ZenHub Context
 ```
 Purpose: Initialize ZenHub MCP connection and load workspace metadata
 
 Steps:
+0. Call helpers.md#Load-ZenHub-Conventions (load cached IDs first)
+
 1. Call getWorkspacePipelinesAndRepositories()
    - Extract GitHub repository ID (graphql ID for createGitHubIssue)
    - Extract ZenHub organization ID (for setDatesForIssue)
@@ -261,16 +292,28 @@ Steps:
    - Map issue type names to IDs:
      - "Epic" → zh_issue_types["Epic"]
      - "Feature" → zh_issue_types["Feature"]
-     - "Task" → zh_issue_types["Task"]
+     - "Task" → zh_issue_types["Task"] (for Sub-tasks; may not exist in all workspaces)
+     - "Bug" → zh_issue_types["Bug"] (optional)
+   - If "Task" type exists: set zh_sub_tasks_supported = true
 
 3. Call getSprint() → zh_active_sprint (id, name, dates)
    Call getUpcomingSprint() → zh_next_sprint (id, name, dates)
 
 4. Set zh_available = true
 
+5. Auto-save conventions file:
+   - Merge MCP results into zh_conventions object
+   - Write updated bmad/zenhub-conventions.yaml with all discovered IDs
+   - Update last_updated timestamp
+   - Log: "✓ ZenHub conventions saved to bmad/zenhub-conventions.yaml"
+
 On any failure:
-  - Set zh_available = false
-  - Output warning: "⚠ ZenHub MCP unavailable. Continuing with local-only workflow."
+  - If zh_conventions_loaded = true:
+    - Set zh_available = true (use cached values)
+    - Output warning: "⚠ ZenHub MCP unavailable. Using cached conventions."
+  - If zh_conventions_loaded = false:
+    - Set zh_available = false
+    - Output warning: "⚠ ZenHub MCP unavailable. Continuing with local-only workflow."
   - Continue with existing workflow (no abort)
 ```
 
@@ -336,6 +379,197 @@ Steps:
    - pipelineId: pipeline_id (Sprint Backlog or Product Backlog)
 
 7. Return zh_story_id, issue number, GitHub issue URL
+```
+
+### Sync Sub-task to ZenHub
+```
+Purpose: Create a GitHub issue for a sub-task, link to parent story
+
+Input: sub_task_title, sub_task_body, zh_story_id (parent story),
+       pipeline_id (optional, default: Sprint Backlog)
+Requires: zh_available = true, zh_github_repo_id, zh_issue_types["Task"]
+
+Pre-check:
+  If zh_issue_types["Task"] is empty/missing:
+    Log: "⚠ Sub-task issue type not available in this workspace. Skipping."
+    Return null
+
+Steps:
+1. Call createGitHubIssue:
+   - repositoryId: zh_github_repo_id
+   - title: "[Sub-task] {sub_task_title}"
+   - body: sub_task_body (markdown)
+   - parentIssueId: zh_story_id
+
+2. Extract zh_sub_task_id and issue number/URL from response
+
+3. Call setIssueType:
+   - issueIds: [zh_sub_task_id]
+   - issueTypeId: zh_issue_types["Task"]
+
+4. If pipeline_id provided, call moveIssueToPipeline:
+   - issueId: zh_sub_task_id
+   - pipelineId: pipeline_id
+
+5. Log: "✓ Sub-task synced: [Sub-task] {title} → #{issue_number} (parent: #{story_number})"
+
+6. Return zh_sub_task_id, issue number, GitHub issue URL
+```
+
+### Auto-Generate Sub-tasks
+```
+Purpose: Automatically generate sub-tasks from a story's acceptance criteria and technical tasks
+
+Input: story_document (parsed story content), zh_story_id (parent story ZenHub ID)
+Requires: zh_available = true, zh_sub_tasks_enabled = true
+
+Steps:
+1. Parse story document to extract:
+   a. Acceptance criteria (each becomes a validation sub-task)
+   b. Technical notes → components/endpoints (each becomes an implementation sub-task)
+   c. Testing items (each becomes a test sub-task)
+
+2. Generate sub-task list:
+   - Implementation tasks: "Implement {component/endpoint/feature}"
+   - Validation tasks: "Validate: {acceptance criterion}"
+   - Test tasks: "Test: {test scenario}"
+
+3. Present preview to user:
+   ```
+   Auto-Generated Sub-tasks for STORY-{ID}:
+
+   Implementation:
+     1. Implement {component_1}
+     2. Implement {component_2}
+     3. Create {API endpoint}
+
+   Validation:
+     4. Validate: {AC-1 summary}
+     5. Validate: {AC-2 summary}
+
+   Testing:
+     6. Test: Unit tests for {component}
+     7. Test: Integration test for {flow}
+
+   Total: {count} sub-tasks
+
+   Create these sub-tasks? (y/n/edit)
+   ```
+
+4. If confirmed:
+   For each sub-task:
+     a. Call helpers.md#Generate-Sub-task-Body with sub-task details
+     b. Call helpers.md#Sync-Sub-task-to-ZenHub:
+        - sub_task_title, sub_task_body, zh_story_id
+     c. Collect zh_sub_task_id, issue number
+
+5. Return array of created sub-tasks with ZenHub IDs
+
+On failure: Log warning for each failed sub-task, continue with remaining
+```
+
+### Generate Epic Body
+```
+Purpose: Generate structured markdown body for Epic GitHub issues
+
+Input: epic_name, epic_description, stories[] (list of story summaries),
+       sprint_info (optional), architecture_context (optional)
+
+Output: Formatted markdown string
+
+Template:
+  ## Epic: {epic_name}
+
+  ### Description
+  {epic_description}
+
+  ### Stories
+  | # | Story | Points | Priority |
+  |---|-------|--------|----------|
+  | STORY-{id} | {title} | {points} | {priority} |
+  ...
+
+  ### Sprint
+  - Sprint: {sprint_name}
+  - Start: {start_date}
+  - End: {end_date}
+
+  ### Architecture Context
+  {architecture_summary — relevant components/layers}
+
+  ### Acceptance Criteria
+  - [ ] All stories completed and merged
+  - [ ] Integration tested across story boundaries
+  - [ ] Epic branch merged to main
+
+  ---
+  *Generated by BMAD Method v6*
+```
+
+### Generate Story Body
+```
+Purpose: Generate structured markdown body for Story GitHub issues
+
+Input: story (parsed story document or sprint plan entry)
+
+Output: Formatted markdown string
+
+Template:
+  ## {user_story_statement}
+
+  ### Description
+  {description_background_scope}
+
+  ### Acceptance Criteria
+  - [ ] {criterion_1}
+  - [ ] {criterion_2}
+  ...
+
+  ### Technical Notes
+  {technical_notes_summary}
+
+  ### Dependencies
+  {dependency_list_or_none}
+
+  ### Story Points: {points}
+
+  ### Definition of Done
+  - [ ] Code implemented on story branch
+  - [ ] Unit tests passing (>=80% coverage)
+  - [ ] Code review approved
+  - [ ] Acceptance criteria validated
+  - [ ] PR merged to epic branch
+
+  ---
+  *Generated by BMAD Method v6*
+```
+
+### Generate Sub-task Body
+```
+Purpose: Generate structured markdown body for Sub-task GitHub issues
+
+Input: sub_task_title, sub_task_type (implementation|validation|test),
+       parent_story_id, context (relevant technical details)
+
+Output: Formatted markdown string
+
+Template:
+  ## Sub-task: {sub_task_title}
+
+  **Parent Story:** STORY-{parent_story_id}
+  **Type:** {sub_task_type}
+
+  ### Description
+  {context_description}
+
+  ### Acceptance Criteria
+  - [ ] {specific_criterion_for_this_sub_task}
+
+  ### Notes
+  {implementation_hints_or_test_scenarios}
+
+  ---
+  *Generated by BMAD Method v6*
 ```
 
 ### Sync Story Dependencies to ZenHub
@@ -586,9 +820,15 @@ To update status: See helpers.md#Update-Workflow-Status
 To use template: See helpers.md#Load-Template + helpers.md#Apply-Variables-to-Template
 To save output: See helpers.md#Save-Output-Document
 To recommend next: See helpers.md#Determine-Next-Workflow
+To load ZenHub conventions: See helpers.md#Load-ZenHub-Conventions
 To init ZenHub: See helpers.md#Load-ZenHub-Context
 To sync epic: See helpers.md#Sync-Epic-to-ZenHub
 To sync story: See helpers.md#Sync-Story-to-ZenHub
+To sync sub-task: See helpers.md#Sync-Sub-task-to-ZenHub
+To auto-generate sub-tasks: See helpers.md#Auto-Generate-Sub-tasks
+To generate epic body: See helpers.md#Generate-Epic-Body
+To generate story body: See helpers.md#Generate-Story-Body
+To generate sub-task body: See helpers.md#Generate-Sub-task-Body
 To sync deps: See helpers.md#Sync-Story-Dependencies-to-ZenHub
 To store xref: See helpers.md#Store-ZenHub-Cross-Reference
 To resolve branches: See helpers.md#Resolve-Branch-Names

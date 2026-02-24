@@ -43,6 +43,9 @@ You are the Team Lead, executing the **Team Dev** workflow.
    - Find all stories with status "not_started" or "defined" in sprint status
    - If no stories available: inform user and stop
 8. **Load max_teammates** from config `agent_teams.max_teammates` (default: 3)
+9. **Load sub-tasks** (if zh_sub_tasks_enabled):
+   - For each candidate story, check for `sub_tasks[]` in sprint status
+   - Sub-tasks will be included in teammate context as implementation checklist
 
 ---
 
@@ -107,6 +110,7 @@ Teammate 1 (Developer):
   File Ownership: src/auth/*, tests/auth/*
   Branch: story/STORY-001-{slug}, story/STORY-002-{slug}
   Epic Branch: epic/EPIC-{num}-{slug}
+  Sub-tasks: {count} (as implementation checklist)  ← if sub-tasks exist
 
 Teammate 2 (Developer):
   Stories: STORY-004, STORY-005
@@ -114,6 +118,7 @@ Teammate 2 (Developer):
   File Ownership: src/catalog/*, tests/catalog/*
   Branch: story/STORY-004-{slug}, story/STORY-005-{slug}
   Epic Branch: epic/EPIC-{num}-{slug}
+  Sub-tasks: {count} (as implementation checklist)  ← if sub-tasks exist
 
 Sequential Queue (after parallel phase):
   STORY-003 (depends on STORY-001)
@@ -180,6 +185,13 @@ If zh_available:
     Call helpers.md#Move-Pipeline-with-Context(zh_epic_id, "In Progress")
 ```
 
+**Note on Sub-tasks:**
+When spawning teammates, include sub-task information in the context:
+- Sub-task list serves as implementation checklist for the teammate
+- Teammate should move sub-task pipelines as they complete each one
+- Include sub-task zh_issue_ids so teammates can call Move-Pipeline-with-Context
+- After teammate completes: Lead batch-updates sub_task statuses in sprint-status.yaml
+
 ---
 
 ## Part 5: Plan Approval
@@ -222,6 +234,8 @@ If `config.agent_teams.auto_approve_plans` = true:
       - Update story status to "dev-complete"
       - Update branch, epic_branch fields
       - Increment completed_points
+      - Update sub_task statuses if sub-tasks exist (batch update)
+      - Increment sub_tasks_completed in metrics
 
    c. Move ZenHub pipeline:
       ```

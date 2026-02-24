@@ -19,6 +19,14 @@ paths:
   stories: "docs/stories"
   tests: "tests"
 
+# ZenHub Integration (optional) - Uncomment to enable
+# zenhub:
+#   conventions_file: "bmad/zenhub-conventions.yaml"
+#   sub_tasks:
+#     enabled: false          # Set to true if workspace supports Task issue type
+#     auto_generate: false    # Auto-generate sub-tasks from story AC/technical tasks
+#     min_story_points: 5     # Only suggest sub-tasks for stories >= this point value
+
 # Agent Teams (experimental) - Uncomment to customize
 # agent_teams:
 #   file_ownership_strategy: "epic-based"  # epic-based (default), directory-based, manual

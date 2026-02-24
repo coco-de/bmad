@@ -26,6 +26,10 @@ epics: []
   #   name: "Epic Name"
   #   description: "Epic description"
   #   status: "not-started"  # not-started, in-progress, completed
+  #   zh_issue_id: ""         # ZenHub issue ID
+  #   zh_issue_number: null   # GitHub issue number
+  #   zh_issue_url: ""        # GitHub issue URL
+  #   zh_pipeline: ""         # Current ZenHub pipeline
   #   stories:
   #     - id: "story-001"
   #       name: "Story name"
@@ -39,6 +43,18 @@ epics: []
   #       epic_branch: ""      # parent epic branch name
   #       pr_url: ""           # story → epic PR URL
   #       pr_status: ""        # open | merged | closed
+  #       zh_issue_id: ""      # ZenHub issue ID
+  #       zh_issue_number: null  # GitHub issue number
+  #       zh_issue_url: ""     # GitHub issue URL
+  #       zh_pipeline: ""      # Current ZenHub pipeline
+  #       sub_tasks: []
+  #         # - id: "sub-task-001"
+  #         #   title: "Sub-task title"
+  #         #   status: "not-started"  # not-started, in-progress, done
+  #         #   zh_issue_id: ""
+  #         #   zh_issue_number: null
+  #         #   zh_issue_url: ""
+  #         #   zh_pipeline: ""
 
 # Sprint Metrics
 metrics:
@@ -47,3 +63,7 @@ metrics:
   stories_completed: 0
   stories_in_progress: 0
   stories_not_started: 0
+  total_sub_tasks: 0
+  sub_tasks_completed: 0
+  total_points: 0
+  completed_points: 0

@@ -150,6 +150,59 @@ paths:
 
 4. Write to `docs/bmm-workflow-status.yaml` using Write tool
 
+### Step 5.5: ZenHub Integration Setup (Optional)
+
+Ask user:
+```
+"Would you like to set up ZenHub integration?"
+
+ZenHub integration enables:
+- Automatic issue creation (Epics, Stories, Sub-tasks)
+- Pipeline management (Sprint Backlog → In Progress → Done)
+- Sprint assignment and tracking
+- Sub-task decomposition for complex stories
+
+Options:
+1. Yes - Set up ZenHub integration
+2. No - Skip (can be configured later)
+```
+
+**If yes:**
+
+1. **Check MCP availability:**
+   - Attempt `helpers.md#Load-ZenHub-Context`
+   - If MCP available:
+     - Auto-discover workspace IDs
+     - Auto-generate `bmad/zenhub-conventions.yaml` from MCP data
+     - Log: "✓ ZenHub conventions auto-generated from workspace"
+   - If MCP not available:
+     - Copy template: `~/.claude/config/bmad/templates/zenhub-conventions.template.yaml`
+       → `bmad/zenhub-conventions.yaml`
+     - Log: "⚠ ZenHub MCP not available. Template created — fill in IDs manually or run again when MCP is configured."
+
+2. **Ask about Sub-tasks:**
+   ```
+   "Does your ZenHub workspace support Sub-tasks (Task issue type)?"
+
+   Options:
+   1. Yes - Enable sub-task decomposition
+   2. No / Not sure - Disable (can enable later)
+   ```
+
+3. **Update project config** (`bmad/config.yaml`):
+   ```yaml
+   zenhub:
+     conventions_file: "bmad/zenhub-conventions.yaml"
+     sub_tasks:
+       enabled: {true|false}
+       auto_generate: false
+       min_story_points: 5
+   ```
+
+**If no:** Skip — ZenHub integration can be configured later by:
+- Creating `bmad/zenhub-conventions.yaml` from template
+- Adding `zenhub:` section to `bmad/config.yaml`
+
 ### Step 6: Confirm Initialization
 
 Display success message:
@@ -166,6 +219,7 @@ Files Created:
   ✓ bmad/config.yaml
   ✓ docs/bmm-workflow-status.yaml
   ✓ Directory structure
+  ✓ bmad/zenhub-conventions.yaml  (if ZenHub setup chosen)
 
 Workflow Path for Level {project_level}:
   {Display path based on level - see Step 7}
@@ -222,6 +276,7 @@ If no: "Run /workflow-status anytime to check your progress."
 - **Apply variables:** `helpers.md#Apply-Variables-to-Template`
 - **Save document:** `helpers.md#Save-Output-Document`
 - **Determine next:** `helpers.md#Determine-Next-Workflow`
+- **Load ZenHub context:** `helpers.md#Load-ZenHub-Context`
 
 ---
 

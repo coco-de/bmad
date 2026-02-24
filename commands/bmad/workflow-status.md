@@ -123,12 +123,31 @@ If current phase is 4 (Implementation):
    Sprint {sprint_number}: {sprint_goal}
    Epics: {total_epics}
    Stories: {stories_completed}/{total_stories} complete
+   Points: {completed_points}/{total_points}
 
    In Progress:
-   - {story-id}: {story-name}
+   - {story-id}: {story-name} ({points} pts)
+     Sub-tasks: {completed}/{total}  (if sub-tasks exist)
    ```
 
-3. Recommend:
+3. **ZenHub Pipeline Summary** (if zh_issue_ids present in sprint status):
+   ```
+   ZenHub Pipelines:
+     Sprint Backlog: {count} issues
+     In Progress: {count} issues
+     Review/QA: {count} issues
+     Done: {count} issues
+   ```
+
+4. **Sub-task Progress** (if sub-tasks enabled and present):
+   ```
+   Sub-task Progress:
+     Total: {total_sub_tasks}
+     Completed: {sub_tasks_completed}
+     Remaining: {total - completed}
+   ```
+
+5. Recommend:
    - If no stories → `/create-story`
    - If stories in-progress → `/dev-story {story-id}`
    - If stories completed → `/retrospective` or `/create-story` for next

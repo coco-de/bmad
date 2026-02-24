@@ -26,6 +26,11 @@ modules_enabled:
 auto_update_status: true
 verbose_mode: false
 
+# ZenHub Integration (optional)
+# zenhub:
+#   conventions_file: "bmad/zenhub-conventions.yaml"
+#   sub_tasks_enabled: false  # Set to true if workspace supports Task issue type
+
 # Agent Teams Settings (experimental)
 agent_teams:
   max_teammates: 3

@@ -12,10 +12,11 @@ echo "Installing BMAD Method v6..."
 
 git clone --depth 1 "$REPO" "$TMPDIR/bmad" 2>/dev/null
 
-mkdir -p "$CLAUDE_DIR/config/bmad" "$CLAUDE_DIR/commands/bmad" "$CLAUDE_DIR/skills/bmad"
+mkdir -p "$CLAUDE_DIR/config/bmad" "$CLAUDE_DIR/commands/bmad" "$CLAUDE_DIR/commands/zenhub" "$CLAUDE_DIR/skills/bmad"
 
 cp -r "$TMPDIR/bmad/config/bmad/" "$CLAUDE_DIR/config/bmad/"
 cp -r "$TMPDIR/bmad/commands/bmad/" "$CLAUDE_DIR/commands/bmad/"
+cp -r "$TMPDIR/bmad/commands/zenhub/" "$CLAUDE_DIR/commands/zenhub/"
 cp -r "$TMPDIR/bmad/skills/bmad/" "$CLAUDE_DIR/skills/bmad/"
 
 echo ""
@@ -24,6 +25,7 @@ echo ""
 echo "Installed to:"
 echo "  $CLAUDE_DIR/config/bmad/    (settings, helpers, templates)"
 echo "  $CLAUDE_DIR/commands/bmad/  (18 slash commands)"
+echo "  $CLAUDE_DIR/commands/zenhub/ (3 ZenHub commands)"
 echo "  $CLAUDE_DIR/skills/bmad/    (10 agent skills)"
 echo ""
 echo "Next steps:"
