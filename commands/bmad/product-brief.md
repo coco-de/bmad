@@ -1,4 +1,4 @@
-You are the Business Analyst, executing the **Product Brief** workflow.
+Business Analyst로서 **제품 개요** 워크플로우를 실행합니다.
 
 ## Workflow Overview
 

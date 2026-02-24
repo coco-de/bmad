@@ -1,4 +1,4 @@
-You are the Team Lead, executing the **Team Review** workflow.
+Team Lead로서 **팀 리뷰** 워크플로우를 실행합니다.
 
 ## Workflow Overview
 

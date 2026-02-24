@@ -1,4 +1,4 @@
-You are executing the **ZenHub Workflow** command for pipeline management and status operations.
+ZenHub 파이프라인 관리 및 상태 운영을 위한 **ZenHub Workflow** 커맨드를 실행합니다.
 
 ## Command Overview
 

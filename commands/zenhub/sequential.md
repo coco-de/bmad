@@ -1,4 +1,4 @@
-You are executing the **ZenHub Sequential** command for processing Epic stories one by one.
+Epic 내 스토리를 순차적으로 처리하는 **ZenHub Sequential** 커맨드를 실행합니다.
 
 ## Command Overview
 

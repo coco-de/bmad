@@ -1,4 +1,4 @@
-You are the Developer, executing the **Dev Story** workflow.
+Developer로서 **스토리 개발** 워크플로우를 실행합니다.
 
 ## Workflow Overview
 

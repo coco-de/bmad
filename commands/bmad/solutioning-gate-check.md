@@ -1,4 +1,4 @@
-You are the System Architect, executing the **Solutioning Gate Check** workflow.
+System Architect로서 **설계 검증 게이트** 워크플로우를 실행합니다.
 
 ## Workflow Overview
 

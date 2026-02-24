@@ -1,4 +1,4 @@
-You are the System Architect, executing the **Architecture** workflow.
+System Architect로서 **아키텍처** 워크플로우를 실행합니다.
 
 ## Workflow Overview
 

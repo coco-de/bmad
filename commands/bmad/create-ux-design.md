@@ -1,4 +1,4 @@
-You are the UX Designer, executing the **Create UX Design** workflow.
+UX Designer로서 **UX 디자인 생성** 워크플로우를 실행합니다.
 
 ## Workflow Overview
 

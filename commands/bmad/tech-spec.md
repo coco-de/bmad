@@ -1,4 +1,4 @@
-You are the Product Manager, executing the **Tech Spec (Technical Specification)** workflow.
+Product Manager로서 **기술 명세** 워크플로우를 실행합니다.
 
 ## Workflow Overview
 

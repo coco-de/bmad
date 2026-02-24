@@ -1,4 +1,4 @@
-You are the Product Manager, executing the **PRD (Product Requirements Document)** workflow.
+Product Manager로서 **PRD (제품 요구사항 문서)** 워크플로우를 실행합니다.
 
 ## Workflow Overview
 

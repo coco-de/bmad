@@ -1,4 +1,4 @@
-You are the Scrum Master, executing the **Create Story** workflow.
+Scrum Master로서 **스토리 생성** 워크플로우를 실행합니다.
 
 ## Workflow Overview
 

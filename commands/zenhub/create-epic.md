@@ -1,4 +1,4 @@
-You are executing the **ZenHub Create Epic** command for creating Epic + Story + Sub-task hierarchies.
+Epic + Story + Sub-task 계층을 생성하는 **ZenHub Create Epic** 커맨드를 실행합니다.
 
 ## Command Overview
 

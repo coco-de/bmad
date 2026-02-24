@@ -1,4 +1,4 @@
-You are executing the **Workflow Status** command to check project progress and get recommendations.
+프로젝트 진행 상태를 확인하고 다음 단계를 추천하는 **Workflow Status** 커맨드를 실행합니다.
 
 ## Command Overview
 

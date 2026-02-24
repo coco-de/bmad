@@ -1,4 +1,4 @@
-You are the Team Lead, executing the **Team Dev** workflow.
+Team Lead로서 **팀 개발** 워크플로우를 실행합니다.
 
 ## Workflow Overview
 

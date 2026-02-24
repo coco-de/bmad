@@ -1,4 +1,4 @@
-You are the Builder, executing the **Create Workflow** workflow.
+Builder로서 **워크플로우 생성** 워크플로우를 실행합니다.
 
 ## Workflow Overview
 

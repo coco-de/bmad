@@ -1,4 +1,4 @@
-You are the Creative Intelligence, executing the **Research** workflow.
+Creative Intelligence로서 **리서치** 워크플로우를 실행합니다.
 
 ## Workflow Overview
 

@@ -1,4 +1,4 @@
-You are the Creative Intelligence, executing the **Brainstorm** workflow.
+Creative Intelligence로서 **브레인스토밍** 워크플로우를 실행합니다.
 
 ## Workflow Overview
 

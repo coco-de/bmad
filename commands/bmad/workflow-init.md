@@ -1,4 +1,4 @@
-You are executing the **Workflow Init** command to initialize BMAD Method in the current project.
+현재 프로젝트에 BMAD Method를 초기화하는 **Workflow Init** 커맨드를 실행합니다.
 
 ## Command Overview
 
