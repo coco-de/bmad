@@ -2,13 +2,32 @@
 skill_id: bmad-core-master
 name: BMad Master
 description: Orchestrates BMAD workflows for structured AI-driven development. Use when initializing BMAD in projects, checking workflow status, or routing between 4 phases (Analysis, Planning, Solutioning, Implementation). Manages project configs, tracks progress through project levels 0-4, and coordinates with specialized workflows. Trigger on /workflow-init, /workflow-status, or when users need BMAD setup.
-version: 6.0.0
+version: 7.0.0
 module: core
 ---
 
 # BMAD Orchestrator
 
 **Purpose:** Core orchestrator for the BMAD Method (Breakthrough Method for Agile AI-Driven Development), managing workflows, tracking status, and routing users through structured development phases.
+
+## Quick Start
+
+```bash
+# Initialize BMAD in your project
+/workflow-init
+
+# Start a full BMAD workflow
+/bmad "Add user authentication"
+
+# Check current progress
+/workflow-status
+
+# Run a specific persona review
+/bmad:review --persona architect "Review current PR"
+
+# Manually verify a phase gate
+/bmad:gate --phase analysis
+```
 
 ## When to Use This Skill
 
@@ -47,6 +66,169 @@ Use this skill when:
 - Level 0-1: Tech Spec required, PRD optional/recommended
 - Level 2+: PRD required, Tech Spec optional
 - Level 2+: Architecture required
+
+## Persona Overview
+
+BMAD uses 7 specialized personas across the 4 development phases:
+
+| Persona | Phase | Role |
+|---------|-------|------|
+| Analyst | Analysis | Requirements analysis, **BDD Gherkin AC authoring** |
+| Product Manager | Planning | Issue structuring, Story Point estimation |
+| Architect | Solutioning | Architecture design review |
+| UX Designer | Solutioning | UI/UX design review |
+| Frontend Developer | Implementation | Frontend implementation |
+| Backend Developer | Implementation | Backend implementation |
+| Scrum Master | Implementation | Workflow management |
+
+## Phase Gate System
+
+All gates are **mandatory** - a failed gate blocks progression to the next phase.
+
+```
+Gate FAILED → Feedback provided → Fix issues → Re-review required
+Gate PASSED → Automatic progression to next phase
+```
+
+### Gate Validation Items
+
+| Gate | Required Validations |
+|------|---------------------|
+| Analysis | Requirements clarity, scope appropriateness, **AC in BDD Gherkin format**, AC completeness (happy-path + error-handling) |
+| Planning | Epic/Story structure, Story Points (1-8), labeling, dependencies |
+| Solutioning | Clean Architecture, DI structure, API design, design system compliance, layout, interactions |
+| Implementation | Branch naming, lint passing, tests passing, code review completed |
+
+### BDD Gherkin Acceptance Criteria
+
+Acceptance criteria **must** be written in BDD Gherkin Given-When-Then format. The Analysis Gate validates AC format compliance.
+
+```gherkin
+Feature: User Authentication
+
+  Scenario: Successful login with valid credentials
+    Given the user is on the login page
+    When they enter valid credentials
+    And tap the login button
+    Then they should be redirected to the home page
+
+  Scenario: Login failure with invalid password
+    Given the user is on the login page
+    When they enter an invalid password
+    And tap the login button
+    Then an error message should be displayed
+```
+
+**Requirements:**
+- Every story must have at least one happy-path scenario
+- Error-handling scenarios are required for user-facing features
+- Each scenario should be testable and unambiguous
+
+## Feedback Loop
+
+When a gate fails, the orchestrator provides structured feedback and requires re-review before proceeding.
+
+```
+╔════════════════════════════════════════════════════════════════╗
+║  Phase 3 Gate: FAILED                                         ║
+╠════════════════════════════════════════════════════════════════╣
+║                                                                ║
+║  Rejection reason:                                             ║
+║  - Architect: BLoC accesses Repository directly                ║
+║                                                                ║
+║  Required actions:                                             ║
+║  1. Create GetBooksUseCase                                     ║
+║  2. Change BLoC to depend on UseCase instead                   ║
+║                                                                ║
+║  After fixes, re-review required:                              ║
+║     /bmad:review --persona architect --retry                   ║
+║                                                                ║
+╚════════════════════════════════════════════════════════════════╝
+```
+
+### Re-review Commands
+
+```bash
+# Re-review by specific persona
+/bmad:review --persona architect --retry
+
+# Re-review entire phase gate
+/bmad:gate --phase solutioning --retry
+```
+
+## Emergency Mode
+
+For production incidents or urgent situations, gates can be streamlined with user approval.
+
+### Approval Flow
+
+```
+1. /bmad --emergency "Emergency fix description"
+2. Claude requests approval via AskUserQuestion:
+   ┌─────────────────────────────────────────────────────────────┐
+   │  ⚠️ Emergency Mode Approval Request                         │
+   │                                                             │
+   │  Emergency mode skips Analysis and Planning gates.          │
+   │  Implementation gate (lint, tests) remains mandatory.       │
+   │                                                             │
+   │  Do you approve?                                            │
+   │  [Yes, approve] [No, use normal mode]                       │
+   └─────────────────────────────────────────────────────────────┘
+3. If approved: Streamlined workflow proceeds
+4. If denied: Falls back to normal BMAD workflow
+5. After completion: Post-incident review required within 48 hours
+```
+
+### Emergency Mode Constraints
+
+| Item | Bypassable | Mandatory |
+|------|-----------|-----------|
+| Analysis Gate | Yes | No |
+| Planning Gate | Yes | No |
+| Solutioning Gate | Simplified | No |
+| Implementation Gate | No | Yes (lint, tests required) |
+| Post-incident Review | - | Yes (within 48 hours) |
+
+## Visual Progress Indicators
+
+Use these ASCII box templates for workflow progress display:
+
+### In-Progress Display
+
+```
+╔════════════════════════════════════════════════════════════════╗
+║  BMAD Workflow: "Add user authentication"                      ║
+╠════════════════════════════════════════════════════════════════╣
+║                                                                ║
+║  Phase 1: ANALYSIS ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✅        ║
+║  Phase 2: PLANNING ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ✅         ║
+║  Phase 3: SOLUTIONING ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 🔄        ║
+║  Phase 4: IMPLEMENTATION ━━━━━━━━━━━━━━━━━━━━━━━━━━ ⏳        ║
+║                                                                ║
+║  Current: Architect review in progress (UX Designer complete)  ║
+║                                                                ║
+╚════════════════════════════════════════════════════════════════╝
+```
+
+### Completion Display
+
+```
+╔════════════════════════════════════════════════════════════════╗
+║  BMAD Workflow Complete: "Add user authentication"             ║
+╠════════════════════════════════════════════════════════════════╣
+║                                                                ║
+║  ✅ Phase 1: ANALYSIS - Approved                               ║
+║  ✅ Phase 2: PLANNING - Issue #42 created                      ║
+║  ✅ Phase 3: SOLUTIONING - Design approved                     ║
+║  ✅ Phase 4: IMPLEMENTATION - PR #45 merged                    ║
+║                                                                ║
+║  Summary:                                                      ║
+║     - Reviews passed: 7/7 personas                             ║
+║     - Gates passed: 4/4 phases                                 ║
+║     - Retries: 1 (Architect)                                   ║
+║                                                                ║
+╚════════════════════════════════════════════════════════════════╝
+```
 
 ## Available Commands
 
@@ -186,6 +368,9 @@ project_type: "web-app"  # web-app, mobile-app, api, game, library, other
 project_level: 2         # 0-4
 output_folder: "docs"
 communication_language: "English"
+
+# Optional: docs site sync script (run after BMAD doc generation)
+# docs_sync_script: "python3 scripts/sync_project_docs.py"
 ```
 
 ### Workflow Status (docs/bmm-workflow-status.yaml)
@@ -197,6 +382,38 @@ Tracks completion of each workflow with status values:
 - `"skipped"` - Explicitly skipped
 
 See [templates/config.template.yaml](templates/config.template.yaml) for full template.
+
+## Project Docs Integration
+
+BMAD-generated documents are stored in the `docs/` directory with a standardized naming pattern:
+
+```
+docs/{type}-{feature-slug}-{YYYY-MM-DD}.md
+
+Examples:
+  docs/prd-user-auth-2025-03-15.md
+  docs/architecture-user-auth-2025-03-15.md
+  docs/tech-spec-user-auth-2025-03-15.md
+```
+
+| Document Type | File Prefix |
+|--------------|------------|
+| Product Brief | `product-brief-` |
+| PRD | `prd-` |
+| Tech Spec | `tech-spec-` |
+| UX Design | `ux-design-` |
+| Architecture | `architecture-` |
+
+### Docs Site Sync (Optional)
+
+If your project has a docs site, configure automatic sync in `bmad/config.yaml`:
+
+```yaml
+# bmad/config.yaml
+docs_sync_script: "python3 scripts/sync_project_docs.py"
+```
+
+When configured, the orchestrator will offer to run the sync script after generating BMAD documents. The sync script is project-specific and should handle copying docs to the appropriate location for your docs site.
 
 ## Helper Scripts
 
@@ -265,6 +482,79 @@ When routing to these skills, pass context:
 
 This skill leverages parallel subagents to maximize context utilization (each agent has up to 1M tokens on Claude Sonnet 4.6 / Opus 4.6).
 
+### Subagent Types
+
+| Type | Model | Tools | Use Case |
+|------|-------|-------|----------|
+| `general-purpose` | Inherited | All tools | Full-capability subagent (default) |
+| `Explore` | Haiku (fast) | Read-only | Codebase exploration, search |
+| `Plan` | Inherited | Read-only | Architecture design, planning |
+
+### Token Budget Guidelines
+
+| Category | Budget | Use Case |
+|----------|--------|----------|
+| Research/Exploration | ~500K | Codebase analysis, pattern investigation |
+| Generation/Writing | ~300K | Code generation, document writing |
+| Validation/Testing | ~80K | Lint, test execution |
+
+### Parallel Execution: Solutioning Phase
+
+Architect and UX Designer review simultaneously:
+
+```
+Agent({
+  subagent_type: "general-purpose",
+  description: "Architect review",
+  prompt: "Review clean architecture, DI structure, API design...",
+})
+// simultaneously
+Agent({
+  subagent_type: "general-purpose",
+  description: "UX Designer review",
+  prompt: "Review design system compliance, layout, interactions...",
+})
+```
+
+### Worktree Isolation: Implementation Phase
+
+When backend and frontend work is independent, use **worktree isolation** to prevent file conflicts:
+
+```
+Agent({
+  subagent_type: "general-purpose",
+  description: "Backend implementation",
+  prompt: "Implement API endpoints...",
+  isolation: "worktree",  // Independent git worktree
+})
+// simultaneously
+Agent({
+  subagent_type: "general-purpose",
+  description: "Frontend implementation",
+  prompt: "Implement UI with mock data...",
+  isolation: "worktree",  // Prevents file conflicts
+})
+```
+
+> **`isolation: "worktree"`**: Creates a temporary git worktree for isolated work.
+> If no changes are made, the worktree is auto-cleaned. Otherwise, the worktree path and branch are returned.
+
+### Background Execution
+
+For long-running research or analysis tasks:
+
+```
+Agent({
+  subagent_type: "Explore",
+  description: "Codebase exploration",
+  prompt: "Analyze existing patterns...",
+  run_in_background: true,  // Returns output_file path
+})
+
+// Check progress (non-blocking)
+TaskOutput(task_id: "...", block: false)
+```
+
 ### Workflow Status Check Workflow
 **Pattern:** Fan-Out Research
 **Agents:** 3-4 parallel agents
@@ -315,6 +605,18 @@ Constraints:
 - Flag any inconsistencies in status file
 ```
 
+## Related Commands
+
+| Command | Description |
+|---------|-------------|
+| `/bmad` | Full BMAD workflow |
+| `/bmad:review` | Single persona review |
+| `/bmad:team-review` | Parallel multi-persona review (Agent Teams) |
+| `/bmad:status` | Check workflow status |
+| `/bmad:gate` | Manual gate verification |
+| `/workflow-init` | Initialize BMAD in project |
+| `/workflow-status` | Check project progress |
+
 ## Notes for Claude
 
 - This is the entry point for BMAD workflows
@@ -324,6 +626,9 @@ Constraints:
 - Keep responses focused and actionable
 - Hand off to specialized skills for detailed workflows
 - Update workflow status after completing workflows
+- Display visual progress indicators at workflow milestones
+- Enforce phase gates - never allow progression past a failed gate
+- When emergency mode is requested, always get explicit user approval first
 
 ## Quick Reference
 
