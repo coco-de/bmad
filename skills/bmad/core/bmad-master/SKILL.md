@@ -2,7 +2,7 @@
 skill_id: bmad-core-master
 name: BMad Master
 description: Orchestrates BMAD workflows for structured AI-driven development. Use when initializing BMAD in projects, checking workflow status, or routing between 4 phases (Analysis, Planning, Solutioning, Implementation). Manages project configs, tracks progress through project levels 0-4, and coordinates with specialized workflows. Trigger on /workflow-init, /workflow-status, or when users need BMAD setup.
-version: 7.0.0
+version: 6.1.0
 module: core
 ---
 
@@ -81,6 +81,47 @@ BMAD uses 7 specialized personas across the 4 development phases:
 | Backend Developer | Implementation | Backend implementation |
 | Scrum Master | Implementation | Workflow management |
 
+## Workflow Execution Flow
+
+```
+╔════════════════════════════════════════════════════════════════╗
+║  BMAD Workflow                                                 ║
+╠════════════════════════════════════════════════════════════════╣
+║                                                                ║
+║  Phase 1: ANALYSIS                                             ║
+║  ├── Analyst review                                            ║
+║  │   ├── Requirements analysis                                 ║
+║  │   ├── BDD Gherkin AC authoring                              ║
+║  │   └── Feasibility review                                    ║
+║  └── Gate: Requirements clarity, scope, AC format              ║
+║                                                                ║
+║  Phase 2: PLANNING                                             ║
+║  ├── Product Manager review                                    ║
+║  │   ├── Epic/Story structuring                                ║
+║  │   ├── Story Point estimation                                ║
+║  │   └── Issue creation                                        ║
+║  └── Gate: Structure, points, labeling, dependencies           ║
+║                                                                ║
+║  Phase 3: SOLUTIONING (parallel)                               ║
+║  ├── Architect review                                          ║
+║  │   ├── Clean Architecture                                    ║
+║  │   ├── DI structure                                          ║
+║  │   └── API design                                            ║
+║  ├── UX Designer review                                        ║
+║  │   ├── Design system compliance                              ║
+║  │   ├── Layout                                                ║
+║  │   └── Interactions                                          ║
+║  └── Gate: All reviews passed                                  ║
+║                                                                ║
+║  Phase 4: IMPLEMENTATION                                       ║
+║  ├── Frontend Developer                                        ║
+║  ├── Backend Developer                                         ║
+║  ├── Scrum Master (workflow management)                        ║
+║  └── Gate: Lint, tests, code review                            ║
+║                                                                ║
+╚════════════════════════════════════════════════════════════════╝
+```
+
 ## Phase Gate System
 
 All gates are **mandatory** - a failed gate blocks progression to the next phase.
@@ -134,11 +175,11 @@ When a gate fails, the orchestrator provides structured feedback and requires re
 ╠════════════════════════════════════════════════════════════════╣
 ║                                                                ║
 ║  Rejection reason:                                             ║
-║  - Architect: BLoC accesses Repository directly                ║
+║  - Architect: Service layer bypasses domain abstractions       ║
 ║                                                                ║
 ║  Required actions:                                             ║
-║  1. Create GetBooksUseCase                                     ║
-║  2. Change BLoC to depend on UseCase instead                   ║
+║  1. Introduce a use case / interactor for the operation        ║
+║  2. Route service calls through the domain layer               ║
 ║                                                                ║
 ║  After fixes, re-review required:                              ║
 ║     /bmad:review --persona architect --retry                   ║
@@ -181,13 +222,13 @@ For production incidents or urgent situations, gates can be streamlined with use
 
 ### Emergency Mode Constraints
 
-| Item | Bypassable | Mandatory |
-|------|-----------|-----------|
-| Analysis Gate | Yes | No |
-| Planning Gate | Yes | No |
-| Solutioning Gate | Simplified | No |
-| Implementation Gate | No | Yes (lint, tests required) |
-| Post-incident Review | - | Yes (within 48 hours) |
+| Item | Emergency Behavior |
+|------|--------------------|
+| Analysis Gate | Skipped |
+| Planning Gate | Skipped |
+| Solutioning Gate | Simplified (basic review only) |
+| Implementation Gate | **Mandatory** (lint + tests required) |
+| Post-incident Review | **Mandatory** (within 48 hours, Architect + PM) |
 
 ## Visual Progress Indicators
 
@@ -622,7 +663,7 @@ Constraints:
 - This is the entry point for BMAD workflows
 - Always check if project is initialized before operations
 - Maintain phase-based progression (don't skip required phases)
-- Use TodoWrite for multi-step initialization
+- Use TaskCreate for multi-step initialization tracking
 - Keep responses focused and actionable
 - Hand off to specialized skills for detailed workflows
 - Update workflow status after completing workflows
