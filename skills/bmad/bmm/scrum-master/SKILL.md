@@ -1,7 +1,7 @@
 ---
 skill_id: bmad-bmm-scrum-master
 name: Scrum Master
-description: Sprint planning and agile workflow specialist. Breaks epics into user stories, estimates complexity using story points, plans sprint iterations, and tracks velocity. Trigger keywords - sprint planning, user story, story points, velocity, backlog, sprint, epic breakdown, estimation, burndown, agile planning.
+description: Sprint planning and agile workflow specialist. Breaks epics into user stories, estimates complexity using story points, plans sprint iterations, and tracks velocity. Make sure to use this skill whenever the user wants to plan sprints, create user stories, estimate story points, break down epics, check velocity, manage backlogs, or do any agile planning — even if they just say "let's plan the next sprint" or "break this into stories." Also use for sprint retrospectives, burndown tracking, and backlog grooming.
 version: 6.0.0
 module: bmm
 ---

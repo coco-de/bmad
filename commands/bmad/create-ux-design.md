@@ -165,6 +165,67 @@ Screens needed: Dashboard (empty state), Dashboard (with data)
 
 ---
 
+### Part 3.5: Design Tool Selection (Optional)
+
+**Check for available MCP design tools and offer integration:**
+
+**Q: 디자인 도구를 사용하시겠습니까?**
+
+> MCP 디자인 도구가 설정되어 있으면 와이어프레임 및 디자인 작업에 활용할 수 있습니다.
+>
+> 1. **Figma** - 클라우드 기반 디자인 (MCP: `figma`)
+> 2. **Pencil** - 로컬 디자인, Git 추적 가능 (MCP: `pencil`)
+> 3. **ASCII/마크다운** - 도구 불필요 (기본값)
+
+**Store as:** `{{design_tool}}`
+
+**Tool detection:** MCP 서버 연결 상태로 사용 가능 여부 확인. 미감지 시 옵션 3(ASCII/마크다운) 자동 선택.
+
+#### Figma 선택 시 (`{{design_tool}}` = figma)
+
+MCP 도구를 활용한 워크플로우:
+
+1. **기존 디자인 참조:** `get_design_context`로 Figma 파일에서 기존 디자인 컨텍스트 로드
+2. **디자인 변수 확인:** `get_variable_defs`로 디자인 시스템 변수/스타일 추출
+3. **코드 매핑 조회:** `get_code_connect_map`으로 Figma ↔ 코드 컴포넌트 매핑 확인
+4. **디자인 생성:** `generate_figma_design`으로 와이어프레임/디자인을 Figma에 생성 (지원 시)
+5. **유저 플로우 다이어그램:** `generate_diagram`으로 Mermaid → FigJam 다이어그램 생성
+6. **스크린샷 확인:** `get_screenshot`으로 결과물 미리보기
+7. **디자인 시스템 규칙:** `create_design_system_rules`로 디자인 시스템 규칙 문서화
+
+**Figma 제한사항:**
+- Rate Limit 주의 (Starter = 월 6회, Dev/Full = 분당 제한)
+- `generate_figma_design`은 일부 클라이언트만 지원 (rolling out)
+- 클라우드 기반이므로 오프라인 불가
+- 미지원 시 ASCII/마크다운으로 폴백
+
+#### Pencil 선택 시 (`{{design_tool}}` = pencil)
+
+MCP 도구를 활용한 워크플로우:
+
+1. **기존 디자인 참조:** `batch_get`으로 .pen 파일 계층 구조 읽기
+2. **편집기 상태 확인:** `get_editor_state`로 현재 편집 상태 파악
+3. **와이어프레임 생성:** `batch_design`으로 요소 생성/수정 (배치 처리)
+4. **디자인 토큰 동기화:** `get_variables` / `set_variables`로 디자인 토큰 읽기/설정
+5. **레이아웃 분석:** `snapshot_layout`으로 레이아웃 구조 분석
+6. **결과 확인:** `get_screenshot`으로 미리보기 스크린샷
+
+**Pencil 장점:**
+- `.pen` 파일이 코드와 동일 저장소에서 Git 추적 가능
+- 완전 로컬 실행, 클라우드 미전송 (프라이버시)
+- 오프라인 작업 가능
+
+**Pencil 제한사항:**
+- Pencil 데스크톱 앱 실행 필수
+- CLI는 아직 실험 단계
+- 미실행 시 ASCII/마크다운으로 폴백
+
+#### ASCII/마크다운 선택 시 (기본값)
+
+MCP 도구 없이 기존 방식대로 진행. 아래 Part 4의 Option 1(ASCII Art) 또는 Option 2(Structured Description) 사용.
+
+---
+
 ### Part 4: Design Wireframes
 
 **For each screen, create wireframe.**
@@ -819,10 +880,12 @@ Next Steps:
 
 ## Notes for LLMs
 
-- Use TodoWrite to track 9 UX design steps
+- Use TodoWrite to track UX design steps (Part 3.5 포함 시 10 steps)
 - Load requirements (PRD/tech-spec) before starting
+- **Part 3.5에서 디자인 도구를 선택하고, MCP 서버 감지 결과에 따라 적절한 워크플로우 분기**
 - Create user flows for all major features
 - Use ASCII art for quick wireframes or structured descriptions for detailed specs
+- **Figma/Pencil MCP 사용 시에도 ASCII/마크다운 문서를 병행 생성 (폴백 및 Git 추적용)**
 - Always include accessibility annotations for WCAG compliance
 - Define design tokens for consistency
 - Extract reusable components
@@ -835,5 +898,6 @@ Next Steps:
 - Use semantic HTML in recommendations
 - Reference helpers.md for all common operations
 - Validate design against requirements before finalizing
+- **MCP 도구 호출 실패 시 자동으로 ASCII/마크다운 폴백 진행**
 
 **Remember:** User-centered, accessible design ensures products work for everyone. Design with developers in mind - clear specs, design tokens, and handoff notes make implementation smooth.

@@ -1,7 +1,7 @@
 ---
 skill_id: bmad-bmm-developer
 name: Developer
-description: Implements user stories, writes clean tested code, follows best practices. Trigger keywords implement story, dev story, code, implement, build feature, fix bug, write tests, code review, refactor
+description: Implements user stories with clean, tested, maintainable code following project best practices. Make sure to use this skill whenever the user wants to implement a story, build a feature, fix a bug, write tests, do a code review, or refactor code — even if they just say "let's start coding" or reference a story number. Also use when the user wants to follow TDD practices, needs implementation guidance, or is working through sprint backlog items.
 version: 6.0.0
 module: bmm
 ---

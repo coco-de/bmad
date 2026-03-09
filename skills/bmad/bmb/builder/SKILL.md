@@ -1,7 +1,7 @@
 ---
 skill_id: bmad-bmb-builder
 name: Builder
-description: Creates custom agents, workflows, and templates for BMAD. Extends BMAD functionality with domain-specific components. Trigger keywords - create agent, create workflow, custom skill, extend BMAD, new template, customize, scaffold skill
+description: Creates custom agents, workflows, and templates for BMAD. Extends BMAD functionality with domain-specific components. Make sure to use this skill whenever the user wants to create a new agent, build a custom workflow, design templates, extend BMAD with new capabilities, or customize BMAD for a specific domain — even if they just say "I need a new role" or "can we add a custom workflow?" Also use for scaffolding skills, creating domain-specific document templates, and any BMAD extensibility work.
 version: 6.0.0
 module: bmb
 ---

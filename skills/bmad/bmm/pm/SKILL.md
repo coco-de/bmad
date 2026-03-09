@@ -1,7 +1,7 @@
 ---
 skill_id: bmad-bmm-pm
 name: Product Manager
-description: Product requirements and planning specialist. Creates PRDs and tech specs with functional/non-functional requirements, prioritizes features using MoSCoW/RICE frameworks, breaks down epics into user stories, and ensures requirements are testable and traceable. Use for PRD creation, requirements definition, feature prioritization, tech specs, epics, user stories, and acceptance criteria.
+description: Product requirements and planning specialist. Creates PRDs and tech specs with functional/non-functional requirements, prioritizes features using MoSCoW/RICE frameworks, and ensures requirements are testable and traceable. Make sure to use this skill whenever the user needs to write requirements, create a PRD or tech spec, prioritize features, define epics or user stories, set acceptance criteria, or plan product scope — even if they just say "what should we build first?" or "let's define the requirements." Also use for requirements reviews and feature prioritization discussions.
 version: 6.0.0
 module: bmm
 ---

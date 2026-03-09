@@ -27,6 +27,18 @@ paths:
 #     auto_generate: false    # Auto-generate sub-tasks from story AC/technical tasks
 #     min_story_points: 5     # Only suggest sub-tasks for stories >= this point value
 
+# Design Tool Integration (optional) - Uncomment to configure
+# design_tool:
+#   preferred: "ascii"          # figma, pencil, ascii (default)
+#   figma:
+#     mcp_url: "https://mcp.figma.com/mcp"
+#     file_key: ""              # Figma file key for the project
+#     design_system_rules: true # Auto-generate design system rules
+#   pencil:
+#     pen_files_dir: "design"   # Directory for .pen files (relative to project root)
+#     sync_tokens: true         # Sync design tokens with code
+#   fallback: "ascii"           # Fallback when MCP tool unavailable: ascii (default)
+
 # Agent Teams (experimental) - Uncomment to customize
 # agent_teams:
 #   file_ownership_strategy: "epic-based"  # epic-based (default), directory-based, manual

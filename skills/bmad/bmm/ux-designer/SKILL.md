@@ -1,7 +1,7 @@
 ---
 skill_id: bmad-bmm-ux-designer
 name: UX Designer
-description: Designs user experiences, creates wireframes, defines user flows, ensures accessibility. Trigger keywords - UX design, wireframe, user flow, accessibility, WCAG, mobile-first, responsive, UI design, user journey, interface design, user experience, design system, component design, interaction design
+description: Designs user experiences, creates wireframes, defines user flows, and ensures accessibility compliance. Make sure to use this skill whenever the user needs UX design, wireframes, user flows, accessibility audits, responsive layouts, UI component design, or design system work — even if they just say "how should the UI look?" or "make it user-friendly." Also use for WCAG compliance checks, mobile-first design, user journey mapping, interaction design, and any visual or experiential design decisions.
 version: 6.0.0
 module: bmm
 ---
@@ -148,6 +148,68 @@ Desktop (1024px+):
 ```
 
 Run `bash scripts/responsive-breakpoints.sh` for detailed breakpoint reference.
+
+## MCP Design Tool Integration
+
+UX 디자인 워크플로우에서 MCP 디자인 도구를 선택적으로 활용할 수 있습니다. 도구 미설정 시 기존 ASCII/마크다운 방식으로 자동 폴백됩니다.
+
+### Figma MCP
+
+**설치:**
+```bash
+# 플러그인 (권장)
+claude plugin install figma@claude-plugins-official
+
+# 수동
+claude mcp add --transport http figma https://mcp.figma.com/mcp
+```
+
+**주요 도구:**
+- `get_design_context` - Figma 프레임 → 코드 컨텍스트 (React+Tailwind 기본)
+- `generate_figma_design` - 웹 페이지 → Figma 디자인 변환 (rolling out)
+- `get_variable_defs` - 디자인 변수/스타일 추출
+- `get_screenshot` - 선택 영역 스크린샷
+- `generate_diagram` - Mermaid → FigJam 다이어그램
+- `get_code_connect_map` / `add_code_connect_map` - Figma ↔ 코드 매핑
+- `create_design_system_rules` - 디자인 시스템 규칙 생성
+
+**활용 시나리오:**
+- 기존 Figma 디자인 참조하여 와이어프레임 생성
+- 유저 플로우를 FigJam 다이어그램으로 시각화
+- 디자인 토큰을 Figma 변수에서 추출
+- 팀 협업이 필요한 경우 (실시간 공유)
+
+**제한사항:** Rate Limit (Starter=월6회), 클라우드 기반(오프라인 불가)
+
+### Pencil MCP
+
+**설치:** Pencil 데스크톱 앱 설치 → 앱 실행 시 MCP 서버 자동 시작
+
+**주요 도구:**
+- `batch_design` - 요소 생성/수정 (배치)
+- `batch_get` - 계층 구조 읽기
+- `get_screenshot` - 미리보기 스크린샷
+- `snapshot_layout` - 레이아웃 분석
+- `get_variables` / `set_variables` - 디자인 토큰 읽기/설정
+- `get_editor_state` - 편집기 상태 확인
+
+**활용 시나리오:**
+- `.pen` 파일로 코드와 동일 저장소에서 디자인 관리
+- 로컬 전용 환경에서 프라이버시 보장
+- Git 추적 가능한 디자인 파일 생성
+- 오프라인 작업이 필요한 경우
+
+**제한사항:** Pencil 앱 실행 필수, CLI는 실험 단계
+
+### 도구 선택 기준
+
+| 상황 | 권장 도구 |
+|------|-----------|
+| 팀 협업, 실시간 공유 필요 | Figma |
+| 프라이버시, 오프라인, Git 추적 | Pencil |
+| 도구 미설정 또는 빠른 프로토타입 | ASCII/마크다운 |
+| 기존 Figma 디자인 참조 필요 | Figma |
+| 로컬 개발 환경 중심 | Pencil |
 
 ## Integration Points
 

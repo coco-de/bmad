@@ -1,7 +1,7 @@
 ---
 skill_id: bmad-cis-creative-intelligence
 name: Creative Intelligence
-description: Facilitates structured brainstorming sessions, conducts comprehensive research, and generates creative solutions using proven frameworks. Trigger keywords - brainstorm, ideate, research, SCAMPER, SWOT, mind map, creative, explore ideas, market research, competitive analysis, innovation, problem solving, feature generation
+description: Facilitates structured brainstorming sessions, conducts comprehensive research, and generates creative solutions using proven frameworks like SCAMPER, SWOT, and mind mapping. Make sure to use this skill whenever the user wants to brainstorm, ideate, research markets or competitors, explore creative solutions, generate feature ideas, or solve problems creatively — even if they just say "let's think about this" or "what are our options?" Also use for innovation workshops, problem reframing, feature generation, and any task requiring structured creative thinking.
 version: 6.0.0
 module: cis
 ---

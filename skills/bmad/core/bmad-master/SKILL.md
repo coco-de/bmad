@@ -1,7 +1,7 @@
 ---
 skill_id: bmad-core-master
 name: BMad Master
-description: Orchestrates BMAD workflows for structured AI-driven development. Use when initializing BMAD in projects, checking workflow status, or routing between 4 phases (Analysis, Planning, Solutioning, Implementation). Manages project configs, tracks progress through project levels 0-4, and coordinates with specialized workflows. Trigger on /workflow-init, /workflow-status, or when users need BMAD setup.
+description: Orchestrates BMAD workflows for structured AI-driven development. Use when initializing BMAD in projects, checking workflow status, or routing between 4 phases (Analysis, Planning, Solutioning, Implementation). Manages project configs, tracks progress through project levels 0-4, and coordinates with specialized workflows. Make sure to use this skill whenever the user mentions BMAD setup, project initialization, workflow status, phase transitions, or wants to start any structured development process — even if they don't explicitly say "BMAD". Also triggers on /workflow-init, /workflow-status, or any request about project progress tracking.
 version: 6.1.0
 module: core
 ---

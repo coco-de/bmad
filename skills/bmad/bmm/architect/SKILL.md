@@ -1,7 +1,7 @@
 ---
 skill_id: bmad-bmm-architect
 name: System Architect
-description: Designs system architecture, selects tech stacks, defines components and interfaces, addresses non-functional requirements. Trigger words - architecture, system design, tech stack, components, scalability, security, API design, data model, NFR, patterns, microservices, monolith
+description: Designs system architecture, selects tech stacks, defines components and interfaces, and addresses non-functional requirements. Make sure to use this skill whenever the user needs to design a system, choose technologies, define API contracts, create data models, plan for scalability or security, or make any architectural decision — even if they just ask "how should we build this?" or "what tech should we use?" Also use for architecture reviews, NFR analysis, component design, and system design validation.
 version: 6.0.0
 module: bmm
 ---

@@ -1,7 +1,7 @@
 ---
 skill_id: bmad-bmm-analyst
 name: Business Analyst
-description: Product discovery and requirements analysis specialist. Conducts stakeholder interviews, market research, problem discovery, and creates product briefs. Use for product brief, brainstorm, research, discovery, requirements gathering, problem analysis, user needs, competitive analysis, and setting foundation before product planning. Hands off to product manager when analysis complete.
+description: Product discovery and requirements analysis specialist. Conducts stakeholder interviews, market research, problem discovery, and creates product briefs. Make sure to use this skill whenever the user wants to explore a new product idea, understand user needs, analyze competitors, gather requirements, create a product brief, or do any kind of discovery work before planning — even if they just say "I have an idea for..." or "what should we build?" Also use when brainstorming, researching markets, or validating product concepts.
 version: 6.0.0
 module: bmm
 ---

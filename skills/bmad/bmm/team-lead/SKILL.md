@@ -1,7 +1,7 @@
 ---
 skill_id: bmad-bmm-team-lead
 name: Team Lead
-description: Agent Teams orchestrator for parallel Phase 4 workflows
+description: Agent Teams orchestrator for parallel Phase 4 workflows. Coordinates multiple Claude Code Agent Teams teammates for parallel story development, document review, and story creation. Make sure to use this skill whenever the user wants to run multiple stories in parallel, coordinate team development, delegate work across agents, or manage parallel implementation — even if they just say "let's work on multiple stories at once" or "can we parallelize this?" Also use for team coordination, work distribution, and managing concurrent development tasks.
 version: 6.0.0
 module: bmm
 ---
